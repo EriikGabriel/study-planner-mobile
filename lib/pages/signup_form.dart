@@ -5,13 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_translate/flutter_translate.dart';
+import 'package:study_planner/components/subjects_dialog.dart';
 import 'package:study_planner/helpers/toast_helper.dart';
 import 'package:study_planner/models/auth_model.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/ufscar_api_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 import 'package:study_planner/types/login.dart';
-import 'package:study_planner/widgets/subjects_dialog.dart';
 
 class SignUpForm extends ConsumerStatefulWidget {
   const SignUpForm({super.key});
@@ -174,11 +174,12 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
         final subjects = UFSCarAPIService.parseSubjects(apiResponse);
 
         // Save user data to Firebase Realtime Database
-        final dataSaved = await FirebaseDataService.saveUserProfileAndDisciplines(
-          email: email,
-          displayName: username,
-          apiResponse: apiResponse,
-        );
+        final dataSaved =
+            await FirebaseDataService.saveUserProfileAndDisciplines(
+              email: email,
+              displayName: username,
+              apiResponse: apiResponse,
+            );
 
         if (!dataSaved) {
           if (mounted) {
