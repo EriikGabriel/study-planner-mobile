@@ -156,6 +156,23 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
   List<Map<String, dynamic>> _posts = [];
   bool _loading = true;
 
+  /// Gera um ID único para a sala baseado na disciplina, turma, ano e período
+  /// Isso garante que todos os alunos da mesma turma compartilhem a mesma sala
+  String _getRoomId() {
+    final nome = widget.subject['nome']?.toString() ?? '';
+    final turma = widget.subject['turma']?.toString() ?? '';
+    final ano = widget.subject['ano']?.toString() ?? '';
+    final periodo = widget.subject['periodo']?.toString() ?? '';
+    
+    // Normaliza o nome removendo espaços e caracteres especiais
+    final nomeNormalizado = nome
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    
+    // Cria um ID único: nome_turma_ano_periodo
+    return '${nomeNormalizado}_${turma}_${ano}_${periodo}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -164,12 +181,12 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
   Future<void> _loadPosts() async {
     setState(() => _loading = true);
-    final subjectId = widget.subject['id']?.toString() ?? '';
-    if (subjectId.isEmpty) {
+    final roomId = _getRoomId();
+    if (roomId.isEmpty) {
       setState(() => _loading = false);
       return;
     }
-    final posts = await FirebaseDataService.fetchRoomPosts(subjectId);
+    final posts = await FirebaseDataService.fetchRoomPosts(roomId);
     setState(() {
       _posts = posts;
       _loading = false;
@@ -184,6 +201,13 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
 
+    String? pickedName;
+    Uint8List? pickedData;
+    String? pickedPath;
+    bool uploading = false;
+    double uploadProgress = 0.0;
+    const int maxFileBytes = 10 * 1024 * 1024; // 10 MB
+
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -191,12 +215,6 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx2, setState2) {
-            String? pickedName;
-            Uint8List? pickedData;
-            String? pickedPath;
-            bool uploading = false;
-            double uploadProgress = 0.0;
-            const int maxFileBytes = 10 * 1024 * 1024; // 10 MB
 
             Future<void> pickPdf() async {
               final res = await FilePicker.platform.pickFiles(
@@ -318,10 +336,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                     setState2(() => uploading = true);
                                     String? attachmentUrl;
                                     String? attachmentName;
-                                    final subjectId =
-                                        widget.subject['id']?.toString() ?? '';
+                                    final roomId = _getRoomId();
                                     if (pickedName != null &&
-                                        subjectId.isNotEmpty) {
+                                        roomId.isNotEmpty) {
                                       // ensure we have bytes to upload: try reading from pickedPath if needed
                                       if (pickedData == null &&
                                           pickedPath != null) {
@@ -362,7 +379,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                       if (pickedData != null) {
                                         final url =
                                             await FirebaseDataService.uploadRoomAttachment(
-                                              subjectId: subjectId,
+                                              subjectId: roomId,
                                               filename:
                                                   pickedName ??
                                                   'attachment.pdf',
@@ -393,7 +410,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                     }
                                     final saved =
                                         await FirebaseDataService.saveRoomPost(
-                                          subjectId: subjectId,
+                                          subjectId: roomId,
                                           post: post,
                                         );
                                     setState2(() => uploading = false);
@@ -485,10 +502,10 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
     );
     if (confirmed != true) return;
 
-    final subjectId = widget.subject['id']?.toString() ?? '';
-    if (subjectId.isEmpty) return;
+    final roomId = _getRoomId();
+    if (roomId.isEmpty) return;
     final ok = await FirebaseDataService.deleteRoomPost(
-      subjectId: subjectId,
+      subjectId: roomId,
       postId: postId,
     );
     if (ok) await _loadPosts();
@@ -551,10 +568,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                           'authorName': displayName,
                           'createdAt': DateTime.now().toIso8601String(),
                         };
-                        final subjectId =
-                            widget.subject['id']?.toString() ?? '';
+                        final roomId = _getRoomId();
                         final saved = await FirebaseDataService.saveRoomReply(
-                          subjectId: subjectId,
+                          subjectId: roomId,
                           postId: postId,
                           reply: reply,
                         );
