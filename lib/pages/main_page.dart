@@ -1,11 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
+import 'package:study_planner/services/notifications_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 
 import 'activity_page.dart'; // importa sua ActivityPage
+import 'notifications_page.dart';
+import 'rooms_page.dart';
 import 'settings_page.dart';
 
 class MainPage extends ConsumerStatefulWidget {
@@ -24,6 +28,8 @@ class _MainPageState extends ConsumerState<MainPage> {
   void initState() {
     super.initState();
     _loadSubjects();
+    // initialize notifications service
+    NotificationsService.init();
   }
 
   Future<void> _loadSubjects() async {
@@ -51,7 +57,12 @@ class _MainPageState extends ConsumerState<MainPage> {
       isLoading: _isLoading,
     ),
     const ActivityPage(),
-    const Placeholder(), // Notificações
+    RoomsPage(
+      subjects: _subjects,
+      onRefresh: _loadSubjects,
+      isLoading: _isLoading,
+    ),
+    NotificationsPage(subjects: _subjects),
     const SettingsPage(), // Configurações
   ];
 
@@ -72,12 +83,14 @@ class _MainPageState extends ConsumerState<MainPage> {
         elevation: 0,
         title: Text(
           _selectedIndex == 0
-              ? "Agenda"
+              ? 'Agenda'
               : _selectedIndex == 1
-              ? "Atividades"
+              ? 'Atividades'
               : _selectedIndex == 2
-              ? "Notificações"
-              : "Configurações",
+              ? 'Salas'
+              : _selectedIndex == 3
+              ? 'Notificações'
+              : 'Configurações',
           style: GoogleFonts.poppins(
             color: theme.primaryText,
             fontWeight: FontWeight.w600,
@@ -113,6 +126,10 @@ class _MainPageState extends ConsumerState<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle_outline_rounded),
             label: 'Atividades',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.forum_outlined),
+            label: 'Salas',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications_none_rounded),
@@ -559,6 +576,7 @@ class _AgendaPageState extends State<AgendaPage> {
                 time: timeDisplay,
                 color: _getColorForIndex(dayIndex * 10 + index),
                 avatars: const [],
+                subjectId: subject['id']?.toString(),
               );
             }),
           ],
@@ -730,12 +748,13 @@ class _AgendaPageState extends State<AgendaPage> {
 }
 
 // TaskCard permanece igual
-class TaskCard extends StatelessWidget {
+class TaskCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final String time;
   final Color color;
   final List<String> avatars;
+  final String? subjectId;
 
   const TaskCard({
     super.key,
@@ -744,68 +763,501 @@ class TaskCard extends StatelessWidget {
     required this.time,
     required this.color,
     required this.avatars,
+    this.subjectId,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: avatars.map((url) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: CircleAvatar(
-                        radius: 14,
-                        backgroundColor: Colors.white,
-                        child: const Icon(
-                          Icons.person,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard>
+    with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+  int _attended = 0;
+  int _missed = 0;
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAttendance();
+  }
+
+  Future<void> _loadAttendance() async {
+    if (widget.subjectId == null) return;
+    setState(() => _loading = true);
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email == null) {
+      setState(() => _loading = false);
+      return;
+    }
+    final data = await FirebaseDataService.fetchAttendance(
+      email: email,
+      subjectId: widget.subjectId!,
+    );
+    if (data == null) {
+      final auto = await FirebaseDataService.getUserAutoPresenceSetting(email);
+      if (auto) {
+        // create default attendance starting from zero (user preference)
+        _attended = 0;
+        _missed = 0;
+        await FirebaseDataService.saveAttendance(
+          email: email,
+          subjectId: widget.subjectId!,
+          attendance: {
+            'attended': _attended,
+            'missed': _missed,
+            'updatedAt': DateTime.now().toIso8601String(),
+          },
+        );
+      }
+    } else {
+      _attended = (data['attended'] is int)
+          ? data['attended']
+          : int.tryParse(data['attended']?.toString() ?? '') ?? 0;
+      _missed = (data['missed'] is int)
+          ? data['missed']
+          : int.tryParse(data['missed']?.toString() ?? '') ?? 0;
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  double get _percentage {
+    // _attended represents total classes held so far; _missed is absences.
+    // Presence percentage = (held - missed) / held
+    final held = _attended;
+    final missed = _missed;
+    if (held <= 0) return 0.0;
+    final present = (held - missed).clamp(0, held);
+    return present / held;
+  }
+
+  Future<void> _changeAttendance({
+    int attendedDelta = 0,
+    int missedDelta = 0,
+  }) async {
+    if (widget.subjectId == null) return;
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email == null) return;
+    setState(() => _loading = true);
+    final ok = await FirebaseDataService.incrementAttendance(
+      email: email,
+      subjectId: widget.subjectId!,
+      attendedDelta: attendedDelta,
+      missedDelta: missedDelta,
+    );
+    if (ok) {
+      _attended = (_attended + attendedDelta).clamp(0, 99999);
+      _missed = (_missed + missedDelta).clamp(0, 99999);
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _editCounts() async {
+    final attendedCtrl = TextEditingController(text: _attended.toString());
+    final missedCtrl = TextEditingController(text: _missed.toString());
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Editar contagem'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: attendedCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Aulas realizadas (já ocorridas)',
+              ),
             ),
+            TextField(
+              controller: missedCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Faltas (aulas perdidas)',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
           ),
-          Text(
-            time,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Salvar'),
           ),
         ],
+      ),
+    );
+    if (res != true) return;
+    final newAtt = int.tryParse(attendedCtrl.text) ?? 0;
+    final newMiss = int.tryParse(missedCtrl.text) ?? 0;
+    if (widget.subjectId == null) return;
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email == null) return;
+    setState(() => _loading = true);
+    final ok = await FirebaseDataService.saveAttendance(
+      email: email,
+      subjectId: widget.subjectId!,
+      attendance: {
+        'attended': newAtt,
+        'missed': newMiss,
+        'updatedAt': DateTime.now().toIso8601String(),
+      },
+    );
+    if (ok) {
+      _attended = newAtt;
+      _missed = newMiss;
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (_percentage * 100).toStringAsFixed(0);
+    // number of additional classes needed to reach 75% is computed where needed
+    final cs = Theme.of(context).colorScheme;
+    // Force white titles on subject cards for consistent contrast
+    final titleColor = Colors.white;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: widget.color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // Header (always visible)
+            Material(
+              color: widget.color,
+              child: InkWell(
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              // show the full discipline title (allow wrapping)
+                              style: GoogleFonts.poppins(
+                                color: titleColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              widget.subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                color: titleColor.withOpacity(0.95),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Force time on the first line and location (sala) on a second line
+                          Builder(
+                            builder: (ctx) {
+                              final parts = widget.time.split('•');
+                              final timeOnly = parts.isNotEmpty
+                                  ? parts[0].trim()
+                                  : widget.time;
+                              final location = parts.length > 1
+                                  ? parts.sublist(1).join('•').trim()
+                                  : '';
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    timeOnly,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.right,
+                                    style: GoogleFonts.poppins(
+                                      color: titleColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  if (location.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      location,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.right,
+                                      style: GoogleFonts.poppins(
+                                        color: titleColor.withOpacity(0.9),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          AnimatedRotation(
+                            turns: _expanded ? 0.5 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: titleColor,
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Expandable content
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: ConstrainedBox(
+                constraints: _expanded
+                    ? const BoxConstraints()
+                    : const BoxConstraints(maxHeight: 0),
+                child: Container(
+                  width: double.infinity,
+                  color: cs.surface,
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final narrow = constraints.maxWidth < 420;
+                                if (!narrow) {
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Presença: $pct%',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w700,
+                                                color: cs.onSurface,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Aulas realizadas: $_attended',
+                                              style: GoogleFonts.poppins(
+                                                color: cs.onSurface.withOpacity(
+                                                  0.9,
+                                                ),
+                                              ),
+                                            ),
+                                            Text(
+                                              'Faltas: $_missed',
+                                              style: GoogleFonts.poppins(
+                                                color: cs.onSurface.withOpacity(
+                                                  0.9,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () => _changeAttendance(
+                                              attendedDelta: 1,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: cs.primary,
+                                              foregroundColor: cs.onPrimary,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
+                                              elevation: 2,
+                                            ),
+                                            child: Text(
+                                              'Adicionar aula',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          ElevatedButton(
+                                            onPressed: () => _changeAttendance(
+                                              missedDelta: 1,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: cs.error,
+                                              foregroundColor: cs.onError,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 10,
+                                                  ),
+                                              elevation: 2,
+                                            ),
+                                            child: Text(
+                                              'Marcar falta',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                // stacked layout for narrow/mobile screens
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Presença: $pct%',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w700,
+                                        color: cs.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Aulas realizadas: $_attended',
+                                      style: GoogleFonts.poppins(
+                                        color: cs.onSurface.withOpacity(0.9),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Faltas: $_missed',
+                                      style: GoogleFonts.poppins(
+                                        color: cs.onSurface.withOpacity(0.9),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _changeAttendance(attendedDelta: 1),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: cs.primary,
+                                        foregroundColor: cs.onPrimary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        elevation: 2,
+                                      ),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: Center(
+                                          child: Text(
+                                            'Adicionar aula',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _changeAttendance(missedDelta: 1),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: cs.error,
+                                        foregroundColor: cs.onError,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        elevation: 2,
+                                      ),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: Center(
+                                          child: Text(
+                                            'Marcar falta',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: _editCounts,
+                            child: Text(
+                              'Editar contagem',
+                              style: GoogleFonts.poppins(color: cs.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
