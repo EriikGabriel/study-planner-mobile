@@ -9,6 +9,7 @@ import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/models/auth_model.dart';
 import 'package:study_planner/pages/signup_form.dart';
 import 'package:study_planner/providers/locale_provider.dart';
+import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 import 'package:study_planner/types/login.dart';
 
@@ -28,6 +29,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   bool _passwordVisibility = false;
   LoginMode _mode = LoginMode.signIn;
   bool _languageChanged = false;
+  String? _pendingLanguageCode;
 
   static const List<String> _languageCodes = ['pt', 'en', 'es', 'fr', 'zh'];
 
@@ -75,6 +77,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         return;
       }
 
+        final String langSnapshot =
+          _pendingLanguageCode ?? ref.read(localeProvider);
+
       final user = await AuthModel().sign(
         email: email,
         password: password,
@@ -84,15 +89,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       if (user != null) {
         if (_languageChanged) {
-          final selectedLang = ref.read(localeProvider);
           final userEmail = user.email ?? email;
-          await ref
-              .read(localeProvider.notifier)
-              .changeLanguage(selectedLang, userEmail);
+          if (userEmail.isNotEmpty) {
+            await FirebaseDataService.setUserLanguageSetting(
+              userEmail,
+              langSnapshot,
+            );
+          }
           if (mounted) {
-            setState(() => _languageChanged = false);
+            setState(() {
+              _languageChanged = false;
+              _pendingLanguageCode = null;
+            });
           } else {
             _languageChanged = false;
+            _pendingLanguageCode = null;
           }
         }
 
@@ -191,9 +202,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     }
                     await localeNotifier.changeLanguage(code, null);
                     if (mounted) {
-                      setState(() => _languageChanged = true);
+                      setState(() {
+                        _languageChanged = true;
+                        _pendingLanguageCode = code;
+                      });
                     } else {
                       _languageChanged = true;
+                      _pendingLanguageCode = code;
                     }
                     Navigator.of(ctx).pop();
                   },
@@ -226,7 +241,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
 
     final theme = Theme.of(context).colorScheme;
     final primaryColor = theme.primary;
@@ -291,7 +305,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               Container(
                 width: width,
-                height: height,
                 padding: const EdgeInsets.all(34),
                 decoration: BoxDecoration(
                   color: secondaryBackground,
@@ -306,6 +319,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   border: BoxBorder.all(color: alternateColor),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 30,
                   children: [

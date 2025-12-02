@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class FirebaseDataService {
@@ -318,7 +321,8 @@ class FirebaseDataService {
     }
   }
 
-  /// Uploads an attachment (e.g., PDF) for a room and returns the download URL
+  /// Uploads an attachment (PDF or image) for a room and saves it to Realtime Database as base64
+  /// Returns the attachment ID that can be used to retrieve the file
   static Future<String?> uploadRoomAttachment({
     required String subjectId,
     required String filename,
@@ -326,35 +330,124 @@ class FirebaseDataService {
     void Function(double progress)? onProgress,
   }) async {
     try {
-      final storage = FirebaseStorage.instance;
-      final path =
-          'rooms/$subjectId/attachments/${DateTime.now().millisecondsSinceEpoch}_$filename';
-      final ref = storage.ref().child(path);
-      final uploadTask = ref.putData(
-        data,
-        SettableMetadata(contentType: 'application/pdf'),
-      );
-
-      // Listen for progress if callback provided
-      if (onProgress != null) {
-        uploadTask.snapshotEvents.listen((snapshot) {
-          final bytesTransferred = snapshot.bytesTransferred;
-          final total = snapshot.totalBytes > 0
-              ? snapshot.totalBytes
-              : data.length;
-          final progress = total > 0 ? bytesTransferred / total : 0.0;
-          try {
-            onProgress(progress);
-          } catch (_) {}
-        });
+      if (kDebugMode) {
+        print('📤 [Firebase] Iniciando upload para Database: $filename (${data.length} bytes)');
       }
+      
+      // Verificar tamanho máximo (10MB)
+      const maxSize = 10 * 1024 * 1024;
+      if (data.length > maxSize) {
+        if (kDebugMode) print('❌ [Firebase] Arquivo muito grande: ${data.length} bytes');
+        return null;
+      }
+      
+      // Detectar tipo de arquivo pela extensão
+      final extension = filename.toLowerCase().split('.').last;
+      String contentType;
+      if (extension == 'pdf') {
+        contentType = 'application/pdf';
+      } else if (extension == 'jpg' || extension == 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (extension == 'png') {
+        contentType = 'image/png';
+      } else if (extension == 'gif') {
+        contentType = 'image/gif';
+      } else if (extension == 'webp') {
+        contentType = 'image/webp';
+      } else {
+        contentType = 'application/octet-stream';
+      }
+      
+      if (kDebugMode) print('📄 [Firebase] Tipo detectado: $contentType');
+      
+      // Converter para base64
+      if (kDebugMode) print('🔄 [Firebase] Convertendo para base64...');
+      if (onProgress != null) onProgress(0.3);
+      
+      final base64Data = base64Encode(data);
+      
+      if (kDebugMode) print('✅ [Firebase] Base64 gerado: ${base64Data.length} caracteres');
+      if (onProgress != null) onProgress(0.5);
+      
+      // Gerar ID único para o attachment (remover caracteres inválidos do Firebase: . # $ [ ])
+      final sanitizedFilename = filename.replaceAll(RegExp(r'[.\#\$\[\]]'), '_');
+      final attachmentId = '${DateTime.now().millisecondsSinceEpoch}_$sanitizedFilename';
+      
+      // Salvar no Realtime Database
+      final db = FirebaseDatabase.instance.ref();
+      final attachmentData = {
+        'filename': filename,
+        'data': base64Data,
+        'size': data.length,
+        'contentType': contentType,
+        'uploadedAt': DateTime.now().toIso8601String(),
+      };
+      
+      if (kDebugMode) print('💾 [Firebase] Salvando no Database...');
+      if (onProgress != null) onProgress(0.7);
+      
+      await db
+          .child('rooms')
+          .child(subjectId)
+          .child('attachments')
+          .child(attachmentId)
+          .set(attachmentData);
+      
+      if (kDebugMode) print('✅ [Firebase] Attachment salvo com ID: $attachmentId');
+      if (onProgress != null) onProgress(1.0);
+      
+      // Retornar o ID do attachment como "URL"
+      return attachmentId;
+    } catch (e, stack) {
+      if (kDebugMode) {
+        print('❌ [Firebase] Erro ao fazer upload do anexo: $e');
+        print('Stack trace: $stack');
+      }
+      return null;
+    }
+  }
 
-      // Await completion
-      await uploadTask;
-      final url = await ref.getDownloadURL();
-      return url;
-    } catch (e) {
-      if (kDebugMode) print('❌ [Firebase] Erro ao fazer upload do anexo: $e');
+  /// Downloads an attachment from Realtime Database and returns the PDF bytes
+  static Future<Uint8List?> downloadRoomAttachment({
+    required String subjectId,
+    required String attachmentId,
+  }) async {
+    try {
+      if (kDebugMode) {
+        print('📥 [Firebase] Baixando attachment: $attachmentId');
+      }
+      
+      final db = FirebaseDatabase.instance.ref();
+      final snapshot = await db
+          .child('rooms')
+          .child(subjectId)
+          .child('attachments')
+          .child(attachmentId)
+          .get();
+      
+      if (!snapshot.exists || snapshot.value == null) {
+        if (kDebugMode) print('❌ [Firebase] Attachment não encontrado');
+        return null;
+      }
+      
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      final base64Data = data['data']?.toString();
+      
+      if (base64Data == null) {
+        if (kDebugMode) print('❌ [Firebase] Dados do attachment vazios');
+        return null;
+      }
+      
+      if (kDebugMode) print('🔄 [Firebase] Decodificando base64...');
+      final bytes = base64Decode(base64Data);
+      
+      if (kDebugMode) print('✅ [Firebase] Attachment baixado: ${bytes.length} bytes');
+      return bytes;
+    } catch (e, stack) {
+      if (kDebugMode) {
+        print('❌ [Firebase] Erro ao baixar attachment: $e');
+        print('Stack trace: $stack');
+      }
       return null;
     }
   }

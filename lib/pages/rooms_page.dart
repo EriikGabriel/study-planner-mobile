@@ -1,15 +1,19 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'dart:html' as html show Blob, Url, window if (dart.library.html) '';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 import 'package:study_planner/utils/file_reader.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Salas: lista de disciplinas do usuário e, ao entrar, exibe posts (resumos/perguntas)
 class RoomsPage extends ConsumerStatefulWidget {
@@ -210,6 +214,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
     final titleCtrl = TextEditingController();
     final bodyCtrl = TextEditingController();
 
+    PlatformFile? pickedFile;
     String? pickedName;
     Uint8List? pickedData;
     String? pickedPath;
@@ -226,30 +231,88 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
           builder: (ctx2, setState2) {
             final loc = AppLocalizations.of(ctx2)!;
 
-            Future<void> pickPdf() async {
-              final res = await FilePicker.platform.pickFiles(
-                type: FileType.custom,
-                allowedExtensions: ['pdf'],
-                withData: true,
+            void showUploadError(String message) {
+              ScaffoldMessenger.of(ctx2).showSnackBar(
+                SnackBar(content: Text(message)),
               );
-              if (res == null) return;
-              final file = res.files.first;
-              Uint8List? data = file.bytes;
-              final path = file.path;
-              // if bytes not provided (some mobile platforms), try reading from path
-              if (data == null && path != null) {
-                try {
-                  data = await readFileBytes(path);
-                } catch (_) {
-                  data = null;
+            }
+
+            Future<void> pickFile() async {
+              try {
+                final res = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
+                  withData: true,
+                  withReadStream: true,
+                );
+                if (res == null || res.files.isEmpty) return;
+                
+                final file = res.files.first;
+                final path = kIsWeb ? null : file.path;
+                
+                // Try to get bytes immediately if available
+                Uint8List? data = file.bytes;
+                
+                // If bytes are not available and we have a path (mobile/desktop), try reading
+                if (data == null && path != null) {
+                  try {
+                    data = await readFileBytes(path);
+                  } catch (_) {
+                    // Ignore error here, will try again in resolvePickedBytes
+                  }
                 }
+
+                setState2(() {
+                  pickedFile = file;
+                  pickedName = file.name;
+                  pickedPath = path;
+                  pickedData = data;
+                });
+              } catch (e) {
+                debugPrint('Error picking file: $e');
+                showUploadError(loc.somethingWrong);
               }
-              // update UI with file name/path even if bytes are not available yet
-              setState2(() {
-                pickedName = file.name;
-                pickedPath = path;
-                pickedData = data; // may be null on some platforms
-              });
+            }
+
+            Future<Uint8List?> resolvePickedBytes() async {
+              // 1. Return if already available
+              if (pickedData != null) return pickedData;
+              
+              try {
+                // 2. Try getting bytes directly from file object
+                if (pickedFile?.bytes != null) {
+                  pickedData = pickedFile!.bytes;
+                  return pickedData;
+                }
+
+                // 3. Try reading from stream (Web support)
+                if (pickedFile?.readStream != null) {
+                  final stream = pickedFile!.readStream!;
+                  final builder = BytesBuilder();
+                  
+                  // Wrap stream reading in a future to allow timeout if needed externally
+                  // or just rely on the stream completing.
+                  await for (final chunk in stream) {
+                    builder.add(chunk);
+                  }
+                  
+                  pickedData = builder.takeBytes();
+                  return pickedData;
+                }
+
+                // 4. Try reading from path (Mobile/Desktop support)
+                if (pickedPath != null) {
+                  final bytes = await readFileBytes(pickedPath!);
+                  if (bytes != null) {
+                    pickedData = bytes;
+                    return bytes;
+                  }
+                }
+              } catch (e) {
+                debugPrint('Error resolving file bytes: $e');
+              }
+              
+              return null;
             }
 
             return Padding(
@@ -313,9 +376,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                     Row(
                       children: [
                         OutlinedButton.icon(
-                          onPressed: pickPdf,
+                          onPressed: pickFile,
                           icon: const Icon(Icons.attach_file),
-                          label: Text(loc.roomsAttachPdf),
+                          label: const Text('Anexar arquivo'),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -339,93 +402,157 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                 : () async {
                                     final title = titleCtrl.text.trim();
                                     final body = bodyCtrl.text.trim();
+                                    final hasAttachment =
+                                        pickedData != null || pickedFile != null;
                                     if (title.isEmpty &&
                                         body.isEmpty &&
-                                        pickedData == null)
+                                        !hasAttachment) {
                                       return;
-                                    setState2(() => uploading = true);
-                                    String? attachmentUrl;
-                                    String? attachmentName;
-                                    final roomId = _getRoomId();
-                                    if (pickedName != null &&
-                                        roomId.isNotEmpty) {
-                                      // ensure we have bytes to upload: try reading from pickedPath if needed
-                                      if (pickedData == null &&
-                                          pickedPath != null) {
-                                        try {
-                                          pickedData = await readFileBytes(
-                                            pickedPath!,
-                                          );
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(
-                                            ctx2,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                loc.roomsAttachmentReadError,
-                                              ),
-                                            ),
-                                          );
-                                          setState2(() => uploading = false);
-                                          return;
-                                        }
-                                      }
+                                    }
 
-                                      // file size check (10 MB)
-                                      if (pickedData != null &&
-                                          pickedData!.lengthInBytes >
-                                              maxFileBytes) {
-                                        ScaffoldMessenger.of(ctx2).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              loc.roomsAttachmentTooLarge(10),
-                                            ),
-                                          ),
-                                        );
-                                        setState2(() => uploading = false);
+                                    setState2(() {
+                                      uploading = true;
+                                      uploadProgress = 0;
+                                    });
+
+                                    bool success = false;
+                                    try {
+                                      if (kDebugMode) debugPrint('🚀 Iniciando envio de post...');
+                                      
+                                      final roomId = _getRoomId();
+                                      if (roomId.isEmpty) {
+                                        if (kDebugMode) debugPrint('❌ Room ID vazio');
+                                        showUploadError(loc.somethingWrong);
                                         return;
                                       }
 
-                                      if (pickedData != null) {
+                                      String? attachmentUrl;
+                                      String? attachmentName;
+
+                                      if (pickedFile != null || pickedData != null) {
+                                        if (kDebugMode) debugPrint('📎 Processando anexo...');
+                                        
+                                        final estimatedSize = pickedFile?.size ??
+                                            pickedData?.lengthInBytes;
+                                        if (estimatedSize != null &&
+                                            estimatedSize > maxFileBytes) {
+                                          if (kDebugMode) debugPrint('❌ Arquivo muito grande: $estimatedSize bytes');
+                                          showUploadError(
+                                            loc.roomsAttachmentTooLarge(10),
+                                          );
+                                          return;
+                                        }
+
+                                        if (kDebugMode) debugPrint('📖 Lendo bytes do arquivo...');
+                                        final data = await resolvePickedBytes().timeout(
+                                          const Duration(seconds: 30),
+                                          onTimeout: () {
+                                            if (kDebugMode) debugPrint('⏱️ Timeout ao ler arquivo');
+                                            return null;
+                                          },
+                                        );
+
+                                        if (data == null) {
+                                          if (kDebugMode) debugPrint('❌ Falha ao ler bytes do arquivo');
+                                          showUploadError(
+                                            loc.roomsAttachmentReadError,
+                                          );
+                                          return;
+                                        }
+                                        
+                                        if (kDebugMode) debugPrint('✅ Arquivo lido: ${data.lengthInBytes} bytes');
+                                        
+                                        if (data.lengthInBytes > maxFileBytes) {
+                                          if (kDebugMode) debugPrint('❌ Arquivo muito grande após leitura');
+                                          showUploadError(
+                                            loc.roomsAttachmentTooLarge(10),
+                                          );
+                                          return;
+                                        }
+
+                                        if (kDebugMode) debugPrint('📤 Enviando arquivo para Firebase...');
                                         final url =
                                             await FirebaseDataService.uploadRoomAttachment(
                                               subjectId: roomId,
                                               filename:
                                                   pickedName ??
                                                   loc.roomsAttachmentDefaultName,
-                                              data: pickedData!,
+                                              data: data,
                                               onProgress: (p) {
+                                                if (!ctx2.mounted) return;
+                                                if (kDebugMode) debugPrint('📊 Progresso UI: ${(p * 100).toStringAsFixed(1)}%');
                                                 setState2(() {
                                                   uploadProgress = p;
                                                 });
                                               },
+                                            ).timeout(
+                                              const Duration(minutes: 2),
+                                              onTimeout: () {
+                                                if (kDebugMode) debugPrint('⏱️ Timeout no upload do Firebase');
+                                                return null;
+                                              },
                                             );
+                                        if (url == null) {
+                                          if (kDebugMode) debugPrint('❌ Upload retornou URL nula');
+                                          showUploadError(loc.somethingWrong);
+                                          return;
+                                        }
+                                        
+                                        if (kDebugMode) debugPrint('✅ Upload concluído: $url');
                                         attachmentUrl = url;
-                                        attachmentName = pickedName;
+                                        attachmentName =
+                                            pickedName ??
+                                            loc.roomsAttachmentDefaultName;
+                                      }
+
+                                      if (kDebugMode) debugPrint('💾 Salvando post no banco de dados...');
+                                      
+                                      final post = {
+                                        'title': title,
+                                        'body': body,
+                                        'authorEmail': email,
+                                        'authorName': displayName,
+                                        'createdAt': DateTime.now()
+                                            .toIso8601String(),
+                                      };
+                                      if (attachmentUrl != null) {
+                                        post['attachmentUrl'] = attachmentUrl;
+                                        post['attachmentName'] =
+                                            attachmentName ??
+                                            loc.roomsAttachmentDefaultName;
+                                      }
+                                      final saved =
+                                          await FirebaseDataService.saveRoomPost(
+                                            subjectId: roomId,
+                                            post: post,
+                                          );
+                                      if (!saved) {
+                                        if (kDebugMode) debugPrint('❌ Falha ao salvar post');
+                                        showUploadError(loc.somethingWrong);
+                                        return;
+                                      }
+                                      
+                                      if (kDebugMode) debugPrint('✅ Post salvo com sucesso!');
+                                      success = true;
+                                      
+                                      if (ctx2.mounted) {
+                                        Navigator.of(ctx2).pop(true);
+                                      }
+                                    } catch (e, stack) {
+                                      if (kDebugMode) {
+                                        debugPrint('❌ Erro geral no upload: $e');
+                                        debugPrint('Stack: $stack');
+                                      }
+                                      showUploadError(loc.somethingWrong);
+                                    } finally {
+                                      if (kDebugMode) debugPrint('🏁 Finalizando (success=$success)...');
+                                      if (ctx2.mounted && !success) {
+                                        setState2(() {
+                                          uploading = false;
+                                          uploadProgress = 0;
+                                        });
                                       }
                                     }
-
-                                    final post = {
-                                      'title': title,
-                                      'body': body,
-                                      'authorEmail': email,
-                                      'authorName': displayName,
-                                      'createdAt': DateTime.now()
-                                          .toIso8601String(),
-                                    };
-                                    if (attachmentUrl != null) {
-                                      post['attachmentUrl'] = attachmentUrl;
-                                      post['attachmentName'] =
-                                          attachmentName ??
-                                          loc.roomsAttachmentDefaultName;
-                                    }
-                                    final saved =
-                                        await FirebaseDataService.saveRoomPost(
-                                          subjectId: roomId,
-                                          post: post,
-                                        );
-                                    setState2(() => uploading = false);
-                                    Navigator.of(ctx2).pop(saved);
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Theme.of(
@@ -524,6 +651,17 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
       postId: postId,
     );
     if (ok) await _loadPosts();
+  }
+
+  IconData _getFileIcon(String filename) {
+    final extension = filename.toLowerCase().split('.').last;
+    if (extension == 'pdf') {
+      return Icons.picture_as_pdf;
+    } else if (extension == 'jpg' || extension == 'jpeg' || 
+               extension == 'png' || extension == 'gif' || extension == 'webp') {
+      return Icons.image;
+    }
+    return Icons.attach_file;
   }
 
   Future<void> _showReplyDialog(String postId) async {
@@ -728,17 +866,106 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                         if (p['attachmentUrl'] != null)
                           GestureDetector(
                             onTap: () async {
-                              final url = p['attachmentUrl']?.toString();
-                              if (url == null) return;
-                              final uri = Uri.tryParse(url);
-                              if (uri == null) return;
-                              if (await canLaunchUrl(uri)) {
-                                await launchUrl(uri);
+                              final attachmentId = p['attachmentUrl']?.toString();
+                              if (attachmentId == null) return;
+                              
+                              // Mostrar loading
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (ctx) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                              
+                              try {
+                                final roomId = _getRoomId();
+                                final bytes = await FirebaseDataService.downloadRoomAttachment(
+                                  subjectId: roomId,
+                                  attachmentId: attachmentId,
+                                );
+                                
+                                if (!mounted) return;
+                                Navigator.of(context).pop(); // Fechar loading
+                                
+                                if (bytes == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(loc.somethingWrong)),
+                                  );
+                                  return;
+                                }
+                                
+                                // Detectar tipo de arquivo
+                                final filename = p['attachmentName']?.toString() ?? '';
+                                final extension = filename.toLowerCase().split('.').last;
+                                String mimeType;
+                                if (extension == 'pdf') {
+                                  mimeType = 'application/pdf';
+                                } else if (extension == 'jpg' || extension == 'jpeg') {
+                                  mimeType = 'image/jpeg';
+                                } else if (extension == 'png') {
+                                  mimeType = 'image/png';
+                                } else if (extension == 'gif') {
+                                  mimeType = 'image/gif';
+                                } else if (extension == 'webp') {
+                                  mimeType = 'image/webp';
+                                } else {
+                                  mimeType = 'application/octet-stream';
+                                }
+                                
+                                // Na web, criar blob URL e abrir
+                                if (kIsWeb) {
+                                  final blob = html.Blob([bytes], mimeType);
+                                  final url = html.Url.createObjectUrlFromBlob(blob);
+                                  html.window.open(url, '_blank');
+                                  // Revogar URL após um delay para garantir que abriu
+                                  Future.delayed(const Duration(seconds: 1), () {
+                                    html.Url.revokeObjectUrl(url);
+                                  });
+                                } else {
+                                  // Mobile/Desktop: salvar arquivo temporariamente e abrir
+                                  try {
+                                    final dir = await getTemporaryDirectory();
+                                    final file = File('${dir.path}/$filename');
+                                    await file.writeAsBytes(bytes);
+                                    
+                                    final result = await OpenFilex.open(file.path);
+                                    
+                                    if (result.type != ResultType.done) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            result.message.isEmpty 
+                                              ? 'Não foi possível abrir o arquivo' 
+                                              : result.message
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (kDebugMode) debugPrint('Erro ao salvar/abrir arquivo: $e');
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(loc.somethingWrong)),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                if (kDebugMode) debugPrint('Erro ao abrir PDF: $e');
+                                if (!mounted) return;
+                                Navigator.of(context).pop(); // Fechar loading
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(loc.somethingWrong)),
+                                );
                               }
                             },
                             child: Row(
                               children: [
-                                Icon(Icons.picture_as_pdf, color: cs.primary),
+                                Icon(
+                                  _getFileIcon(p['attachmentName']?.toString() ?? ''),
+                                  color: cs.primary,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
