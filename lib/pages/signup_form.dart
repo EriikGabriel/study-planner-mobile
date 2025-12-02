@@ -4,10 +4,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:study_planner/components/subjects_dialog.dart';
 import 'package:study_planner/helpers/toast_helper.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/models/auth_model.dart';
+import 'package:study_planner/providers/locale_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/ufscar_api_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
@@ -31,6 +32,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
   bool _passwordVisibility = false;
   bool _isLoading = false;
 
+  AppLocalizations get _loc => AppLocalizations.of(context)!;
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -43,33 +46,32 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
   }
 
   String? _validateNotEmpty(String? value) {
-    return (value == null || value.isEmpty)
-        ? translate('mandatory-field')
-        : null;
+    return (value == null || value.isEmpty) ? _loc.mandatoryField : null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return translate('mandatory-field');
+      return _loc.mandatoryField;
     }
     final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Email inválido';
+      return _loc.loginInvalidEmail;
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return translate('mandatory-field');
+      return _loc.mandatoryField;
     }
     if (value.length < 6) {
-      return 'Senha deve ter pelo menos 6 caracteres';
+      return _loc.signupPasswordTooShort;
     }
     return null;
   }
 
   Future<void> _handleSignUp() async {
+    final loc = _loc;
     final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -78,8 +80,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     if (username.isEmpty) {
       showErrorToast(
         context: context,
-        title: translate('error'),
-        content: 'Nome de usuário é obrigatório',
+        title: loc.error,
+        content: loc.signupUsernameRequired,
       );
       return;
     }
@@ -87,8 +89,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     if (email.isEmpty) {
       showErrorToast(
         context: context,
-        title: translate('error'),
-        content: 'Email é obrigatório',
+        title: loc.error,
+        content: loc.loginEmailRequired,
       );
       return;
     }
@@ -97,8 +99,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     if (_validateEmail(email) != null) {
       showErrorToast(
         context: context,
-        title: translate('error'),
-        content: 'Email inválido',
+        title: loc.error,
+        content: loc.loginInvalidEmail,
       );
       return;
     }
@@ -106,8 +108,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     if (password.isEmpty) {
       showErrorToast(
         context: context,
-        title: translate('error'),
-        content: 'Senha é obrigatória',
+        title: loc.error,
+        content: loc.loginPasswordRequired,
       );
       return;
     }
@@ -116,8 +118,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     if (_validatePassword(password) != null) {
       showErrorToast(
         context: context,
-        title: translate('error'),
-        content: 'Senha deve ter pelo menos 6 caracteres',
+        title: loc.error,
+        content: loc.signupPasswordTooShort,
       );
       return;
     }
@@ -139,12 +141,17 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
           if (!mounted) return;
           showErrorToast(
             context: context,
-            title: translate('error'),
-            content: 'Email já cadastrado ou erro ao criar conta',
+            title: loc.error,
+            content: loc.signupAccountCreationError,
           );
           setState(() => _isLoading = false);
           return;
         }
+
+        final selectedLang = ref.read(localeProvider);
+        await ref
+            .read(localeProvider.notifier)
+            .changeLanguage(selectedLang, user.email ?? email);
 
         if (username.isNotEmpty) {
           await user.updateDisplayName(username);
@@ -163,8 +170,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
         if (apiResponse == null) {
           showErrorToast(
             context: context,
-            title: translate('error'),
-            content: 'Email ou senha inválidos na plataforma UFSCar.',
+            title: loc.error,
+            content: loc.signupUfscarInvalidCredentials,
           );
           setState(() => _isLoading = false);
           return;
@@ -185,8 +192,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
           if (mounted) {
             showErrorToast(
               context: context,
-              title: translate('error'),
-              content: 'Erro ao salvar dados. Tente novamente.',
+              title: loc.error,
+              content: loc.signupSaveDataError,
             );
           }
           setState(() => _isLoading = false);
@@ -203,8 +210,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
 
         showSuccessToast(
           context: context,
-          title: translate('success'),
-          content: translate('user-created'),
+          title: loc.success,
+          content: loc.userCreated,
         );
 
         // Navigate to login after a short delay to allow dialog viewing
@@ -215,21 +222,23 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
       } on FirebaseAuthException catch (authError) {
         if (!mounted) return;
 
-        String errorMessage = 'Erro ao registrar na conta';
+        String errorMessage = loc.signupGenericError;
 
         if (authError.code == 'email-already-in-use') {
-          errorMessage = 'Este email já está cadastrado';
+          errorMessage = loc.signupEmailAlreadyExists;
         } else if (authError.code == 'invalid-email') {
-          errorMessage = 'Email inválido';
+          errorMessage = loc.loginInvalidEmail;
         } else if (authError.code == 'weak-password') {
-          errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres';
+          errorMessage = loc.signupWeakPassword;
         } else if (authError.code == 'operation-not-allowed') {
-          errorMessage = 'Operação não permitida. Tente novamente mais tarde';
+          errorMessage = loc.signupOperationNotAllowed;
+        } else {
+          errorMessage = loc.signupGenericError;
         }
 
         showErrorToast(
           context: context,
-          title: translate('error'),
+          title: loc.error,
           content: errorMessage,
         );
         setState(() => _isLoading = false);
@@ -238,10 +247,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
       if (mounted) {
         showErrorToast(
           context: context,
-          title: translate('error'),
-          content: e.toString().contains('Erro')
-              ? e.toString()
-              : 'Erro ao conectar com a API: ${e.toString()}',
+          title: loc.error,
+          content: '${loc.signupApiConnectionError}: ${e.toString()}',
         );
       }
     } finally {
@@ -275,7 +282,7 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
               cursorColor: primaryText,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: translate('username'),
+                hintText: _loc.username,
                 hintStyle: Theme.of(
                   context,
                 ).textTheme.bodyLarge!.copyWith(color: secondaryText),
@@ -310,7 +317,7 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
               cursorColor: primaryText,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Email',
+                hintText: _loc.loginEmail,
                 hintStyle: Theme.of(
                   context,
                 ).textTheme.bodyLarge!.copyWith(color: secondaryText),
@@ -346,7 +353,7 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
               cursorColor: primaryText,
               decoration: InputDecoration(
                 isDense: true,
-                hintText: translate('password'),
+                hintText: _loc.loginPassword,
                 hintStyle: Theme.of(
                   context,
                 ).textTheme.bodyLarge!.copyWith(color: secondaryText),
@@ -405,7 +412,7 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
                     ),
                   )
                 : Text(
-                    'Cadastrar',
+                  _loc.loginButtonSignup,
                     style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                       color: Theme.of(context).colorScheme.primaryBackground,
                       fontWeight: FontWeight.w600,

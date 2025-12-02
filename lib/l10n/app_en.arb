@@ -1,0 +1,247 @@
+{
+    "@@locale": "en",
+    "appTitle": "Study Planner",
+    "appTagline": "More than a planner, your ally on the academic journey.",
+    "mandatoryField": "Mandatory Field!",
+    "success": "Success",
+    "userCreated": "User Created",
+    "error": "Error",
+    "wrongUserOrPassword": "Wrong user or password",
+    "somethingWrong": "Something went wrong. Please try again",
+    "musicForEveryone": "Music for everyone",
+    "username": "Fullname",
+    "password": "Password",
+    "orLabel": " OR ",
+    "continueWithGoogle": "Continue with Google",
+    "dontHaveAccount": "Don't have an account? ",
+    "alreadyHaveAccount": "Already have an account? ",
+    "loginSigninTitle": "Sign in with",
+    "loginSignupTitle": "Create your account",
+    "loginEmail": "Email",
+    "loginPassword": "Password",
+    "loginButton": "Sign in",
+    "loginButtonSignup": "Register",
+    "loginToggleSignup": "Don't have an account? Register",
+    "loginToggleSignin": "Already have an account? Sign in",
+    "loginSuccess": "Signed in successfully!",
+    "loginEmailRequired": "Email is required",
+    "loginPasswordRequired": "Password is required",
+    "loginInvalidEmail": "Invalid email",
+    "loginInvalidCredentials": "Invalid email or password. Check your data.",
+    "loginUserNotFound": "User not found. Please register first.",
+    "loginWrongPassword": "Incorrect password. Try again.",
+    "loginUserDisabled": "User disabled. Contact support.",
+    "loginTooManyRequests": "Too many login attempts. Try again later.",
+    "loginGenericError": "Error while signing in",
+    "loginConnectionError": "Connection error",
+    "signupUsernameRequired": "Username is required",
+    "signupPasswordTooShort": "Password must be at least 6 characters",
+    "signupAccountCreationError": "Email already registered or error while creating account",
+    "signupUfscarInvalidCredentials": "Invalid email or password on the UFSCar platform.",
+    "signupSaveDataError": "Failed to save data. Please try again.",
+    "signupGenericError": "Error while creating account",
+    "signupEmailAlreadyExists": "This email is already registered",
+    "signupWeakPassword": "Weak password. Use at least 6 characters.",
+    "signupOperationNotAllowed": "Operation not allowed. Try again later.",
+    "signupApiConnectionError": "Error connecting to the API",
+    "settingsAppearanceSection": "Appearance",
+    "settingsAccountSection": "Account",
+    "settingsAboutSection": "About",
+    "settingsEditProfile": "Edit Profile",
+    "settingsChangePassword": "Change Password",
+    "settingsNotifications": "Notifications",
+    "settingsComingSoon": "In development",
+    "settingsAutoPresenceTitle": "Automatic attendance",
+    "settingsAutoPresenceSubtitle": "Mark attendance automatically for new subjects",
+    "settingsAutoPresenceSaveError": "Error saving setting",
+    "settingsLanguageTitle": "Language",
+    "settingsLanguageDialogTitle": "Select Language",
+    "settingsAboutApp": "About the App",
+    "settingsPrivacyPolicy": "Privacy Policy",
+    "settingsTermsOfUse": "Terms of Use",
+    "settingsLogoutButton": "Sign out",
+    "settingsLogoutTitle": "Sign out",
+    "settingsLogoutMessage": "Are you sure you want to sign out?",
+    "settingsLogoutCancel": "Cancel",
+    "settingsLogoutConfirm": "Sign out",
+    "settingsThemeTitle": "Dark Mode",
+    "settingsThemeEnabled": "Enabled",
+    "settingsThemeDisabled": "Disabled",
+    "languagePortuguese": "Portuguese",
+    "languageEnglish": "English",
+    "languageSpanish": "Spanish",
+    "languageFrench": "French",
+    "languageChinese": "Chinese",
+    "mainTabAgenda": "Schedule",
+    "mainTabActivities": "Activities",
+    "mainTabRooms": "Rooms",
+    "mainTabNotifications": "Notifications",
+    "mainTabSettings": "Settings",
+    "agendaFilterAll": "All",
+    "agendaDefaultSectionTitle": "My Subjects",
+    "agendaClearFilter": "View all",
+    "agendaGoToToday": "Today",
+    "agendaEmptyTitle": "No subjects found",
+    "agendaEmptyAction": "Reload",
+    "agendaEmptyDayTitle": "No subjects on this day",
+    "agendaEmptyDayAction": "View all subjects",
+    "agendaSubjectsCount": "({count} {count, plural, one {subject} other {subjects}})",
+    "agendaNoSchedule": "Schedule not defined",
+    "agendaClassLabel": "Class {group} • {year}/{term}",
+    "agendaNoName": "Untitled subject",
+    "agendaNoDayDefined": "No day defined",
+    "agendaDayMonday": "Monday",
+    "agendaDayTuesday": "Tuesday",
+    "agendaDayWednesday": "Wednesday",
+    "agendaDayThursday": "Thursday",
+    "agendaDayFriday": "Friday",
+    "agendaDaySaturday": "Saturday",
+    "agendaDaySunday": "Sunday",
+    "attendanceDialogTitle": "Edit counts",
+    "attendanceDialogAttendedLabel": "Classes held (already happened)",
+    "attendanceDialogMissedLabel": "Absences (missed classes)",
+    "attendanceDialogCancel": "Cancel",
+    "attendanceDialogSave": "Save",
+    "attendancePresence": "Attendance: {percentage}%",
+    "attendanceAttendedLabel": "Classes held: {count}",
+    "attendanceMissedLabel": "Absences: {count}",
+    "attendanceAddClass": "Add class",
+    "attendanceMarkAbsence": "Mark absence",
+    "attendanceEditCounts": "Edit counts",
+    "@agendaSubjectsCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@agendaClassLabel": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@attendancePresence": {
+        "placeholders": {
+            "percentage": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceAttendedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceMissedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "commonCancel": "Cancel",
+    "commonDelete": "Delete",
+    "commonUndo": "Undo",
+    "commonReload": "Reload",
+    "commonConfirm": "Confirm",
+    "commonSave": "Save",
+    "commonCreate": "Create",
+    "activitySectionToday": "Today",
+    "activitySectionTomorrow": "Tomorrow",
+    "activityMigrationStart": "Starting color migration...",
+    "activityMigrationDone": "Migration finished: {count} items updated",
+    "activityMarkedDone": "Activity marked as completed",
+    "activityMarkedPending": "Activity marked as pending",
+    "activityDeleteTitle": "Delete activity",
+    "activityDeleteMessage": "Do you want to delete this activity?",
+    "activityDeleted": "Activity deleted",
+    "activityDeleteError": "Error deleting activity",
+    "activityFilterPending": "Pending",
+    "activityFilterCompleted": "Completed",
+    "activityEmptyTitle": "No activities found",
+    "activityNewButton": "New activity",
+    "activityDialogTitleEdit": "Edit task",
+    "activityDialogTitleCreate": "Create task",
+    "activityNameHint": "Name",
+    "activityStartLabel": "Start",
+    "activityEndLabel": "End",
+    "activityDeadlineLabel": "Due date",
+    "activityCategoryLabel": "Category",
+    "activityCategoryAssignment": "Assignment",
+    "activityCategoryExam": "Exam",
+    "activityDetailsHint": "Details...",
+    "activityNameRequired": "Name is required",
+    "activityCreateError": "Error saving activity",
+    "activitySaveButton": "Save",
+    "activityCreateButton": "Create",
+    "activityUntitled": "Untitled",
+    "activityMenuEdit": "Edit",
+    "activityMenuDelete": "Delete",
+    "activityMenuMarkComplete": "Mark as completed",
+    "activityMenuUnmarkComplete": "Mark as pending",
+    "activityTimeRange": "{start} - {end}",
+    "roomsEmptyTitle": "No courses found",
+    "roomsNoName": "Untitled course",
+    "roomsSubtitle": "Class {group} • {year} / {term}",
+    "roomsNewPostTitle": "New post",
+    "roomsPostTitleHint": "Title",
+    "roomsPostBodyHint": "Write your question or summary...",
+    "roomsAttachPdf": "Attach PDF",
+    "roomsNoAttachment": "No attachment",
+    "roomsAttachmentReadError": "Could not read the attached file",
+    "roomsAttachmentTooLarge": "File too large — maximum allowed is {maxSize} MB",
+    "roomsUploading": "Uploading...",
+    "roomsPublishButton": "Publish",
+    "roomsDeletePostTitle": "Delete post",
+    "roomsDeletePostMessage": "Do you want to delete this post?",
+    "roomsDeletePost": "Delete",
+    "roomsReplyTitle": "Reply",
+    "roomsReplyHint": "Write your reply...",
+    "roomsReplyButton": "Reply",
+    "roomsRepliesCount": "{count} {count, plural, one {reply} other {replies}}",
+    "roomsRespondAction": "Reply",
+    "roomsNoPosts": "No posts yet. Create the first one!",
+    "roomsNewPostFab": "New post",
+    "roomsAttachmentDefaultName": "Attachment.pdf",
+    "roomsAnonymous": "Anonymous",
+    "notificationsEmptyTitle": "No notifications",
+    "notificationsDefaultTitle": "Notification",
+    "@activityMigrationDone": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@activityTimeRange": {
+        "placeholders": {
+            "start": {},
+            "end": {}
+        }
+    },
+    "@roomsSubtitle": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@roomsAttachmentTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "int"
+            }
+        }
+    },
+    "@roomsRepliesCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
+}

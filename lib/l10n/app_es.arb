@@ -1,0 +1,247 @@
+{
+    "@@locale": "es",
+    "appTitle": "Study Planner",
+    "appTagline": "Más que un planner, tu aliado en la jornada académica.",
+    "mandatoryField": "¡Campo obligatorio!",
+    "success": "Éxito",
+    "userCreated": "Usuario creado",
+    "error": "Error",
+    "wrongUserOrPassword": "Usuario o contraseña incorrectos",
+    "somethingWrong": "Algo salió mal. Por favor, inténtalo de nuevo",
+    "musicForEveryone": "Música para todos",
+    "username": "Nombre completo",
+    "password": "Contraseña",
+    "orLabel": " O ",
+    "continueWithGoogle": "Continuar con Google",
+    "dontHaveAccount": "¿No tienes una cuenta? ",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta? ",
+    "loginSigninTitle": "Inicia sesión con",
+    "loginSignupTitle": "Crea tu cuenta",
+    "loginEmail": "Correo electrónico",
+    "loginPassword": "Contraseña",
+    "loginButton": "Iniciar sesión",
+    "loginButtonSignup": "Registrarse",
+    "loginToggleSignup": "¿No tienes una cuenta? Regístrate",
+    "loginToggleSignin": "¿Ya tienes una cuenta? Inicia sesión",
+    "loginSuccess": "¡Inicio de sesión exitoso!",
+    "loginEmailRequired": "El correo electrónico es obligatorio",
+    "loginPasswordRequired": "La contraseña es obligatoria",
+    "loginInvalidEmail": "Correo electrónico inválido",
+    "loginInvalidCredentials": "Correo electrónico o contraseña inválidos. Verifica tus datos.",
+    "loginUserNotFound": "Usuario no encontrado. Regístrate primero.",
+    "loginWrongPassword": "Contraseña incorrecta. Inténtalo de nuevo.",
+    "loginUserDisabled": "Usuario deshabilitado. Contacta al soporte.",
+    "loginTooManyRequests": "Demasiados intentos de inicio de sesión. Intenta más tarde.",
+    "loginGenericError": "Error al iniciar sesión",
+    "loginConnectionError": "Error de conexión",
+    "signupUsernameRequired": "El nombre de usuario es obligatorio",
+    "signupPasswordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "signupAccountCreationError": "Correo ya registrado o error al crear la cuenta",
+    "signupUfscarInvalidCredentials": "Correo o contraseña inválidos en la plataforma UFSCar.",
+    "signupSaveDataError": "Error al guardar los datos. Inténtalo de nuevo.",
+    "signupGenericError": "Error al crear la cuenta",
+    "signupEmailAlreadyExists": "Este correo ya está registrado",
+    "signupWeakPassword": "Contraseña muy débil. Usa al menos 6 caracteres.",
+    "signupOperationNotAllowed": "Operación no permitida. Inténtalo más tarde.",
+    "signupApiConnectionError": "Error al conectar con la API",
+    "settingsAppearanceSection": "Apariencia",
+    "settingsAccountSection": "Cuenta",
+    "settingsAboutSection": "Acerca de",
+    "settingsEditProfile": "Editar perfil",
+    "settingsChangePassword": "Cambiar contraseña",
+    "settingsNotifications": "Notificaciones",
+    "settingsComingSoon": "En desarrollo",
+    "settingsAutoPresenceTitle": "Asistencia automática",
+    "settingsAutoPresenceSubtitle": "Marcar asistencia automáticamente en nuevas materias",
+    "settingsAutoPresenceSaveError": "Error al guardar la configuración",
+    "settingsLanguageTitle": "Idioma",
+    "settingsLanguageDialogTitle": "Seleccionar idioma",
+    "settingsAboutApp": "Sobre la app",
+    "settingsPrivacyPolicy": "Política de privacidad",
+    "settingsTermsOfUse": "Términos de uso",
+    "settingsLogoutButton": "Cerrar sesión",
+    "settingsLogoutTitle": "Cerrar sesión",
+    "settingsLogoutMessage": "¿Seguro que deseas salir?",
+    "settingsLogoutCancel": "Cancelar",
+    "settingsLogoutConfirm": "Salir",
+    "settingsThemeTitle": "Modo oscuro",
+    "settingsThemeEnabled": "Activado",
+    "settingsThemeDisabled": "Desactivado",
+    "languagePortuguese": "Portugués",
+    "languageEnglish": "Inglés",
+    "languageSpanish": "Español",
+    "languageFrench": "Francés",
+    "languageChinese": "Chino",
+    "mainTabAgenda": "Agenda",
+    "mainTabActivities": "Actividades",
+    "mainTabRooms": "Salas",
+    "mainTabNotifications": "Notificaciones",
+    "mainTabSettings": "Configuración",
+    "agendaFilterAll": "Todos",
+    "agendaDefaultSectionTitle": "Mis materias",
+    "agendaClearFilter": "Ver todo",
+    "agendaGoToToday": "Hoy",
+    "agendaEmptyTitle": "No se encontraron materias",
+    "agendaEmptyAction": "Recargar",
+    "agendaEmptyDayTitle": "No hay materias en este día",
+    "agendaEmptyDayAction": "Ver todas las materias",
+    "agendaSubjectsCount": "({count} {count, plural, one {materia} other {materias}})",
+    "agendaNoSchedule": "Horario no definido",
+    "agendaClassLabel": "Clase {group} • {year}/{term}",
+    "agendaNoName": "Sin nombre",
+    "agendaNoDayDefined": "Sin día definido",
+    "agendaDayMonday": "Lunes",
+    "agendaDayTuesday": "Martes",
+    "agendaDayWednesday": "Miércoles",
+    "agendaDayThursday": "Jueves",
+    "agendaDayFriday": "Viernes",
+    "agendaDaySaturday": "Sábado",
+    "agendaDaySunday": "Domingo",
+    "attendanceDialogTitle": "Editar conteo",
+    "attendanceDialogAttendedLabel": "Clases realizadas (ya ocurridas)",
+    "attendanceDialogMissedLabel": "Faltas (clases perdidas)",
+    "attendanceDialogCancel": "Cancelar",
+    "attendanceDialogSave": "Guardar",
+    "attendancePresence": "Asistencia: {percentage}%",
+    "attendanceAttendedLabel": "Clases realizadas: {count}",
+    "attendanceMissedLabel": "Faltas: {count}",
+    "attendanceAddClass": "Agregar clase",
+    "attendanceMarkAbsence": "Marcar falta",
+    "attendanceEditCounts": "Editar conteo",
+    "@agendaSubjectsCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@agendaClassLabel": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@attendancePresence": {
+        "placeholders": {
+            "percentage": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceAttendedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceMissedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "commonCancel": "Cancelar",
+    "commonDelete": "Eliminar",
+    "commonUndo": "Deshacer",
+    "commonReload": "Recargar",
+    "commonConfirm": "Confirmar",
+    "commonSave": "Guardar",
+    "commonCreate": "Crear",
+    "activitySectionToday": "Hoy",
+    "activitySectionTomorrow": "Mañana",
+    "activityMigrationStart": "Iniciando migración de colores...",
+    "activityMigrationDone": "Migración finalizada: {count} elementos actualizados",
+    "activityMarkedDone": "Actividad marcada como completada",
+    "activityMarkedPending": "Actividad marcada como pendiente",
+    "activityDeleteTitle": "Eliminar actividad",
+    "activityDeleteMessage": "¿Desea eliminar esta actividad?",
+    "activityDeleted": "Actividad eliminada",
+    "activityDeleteError": "Error al eliminar la actividad",
+    "activityFilterPending": "Pendientes",
+    "activityFilterCompleted": "Completadas",
+    "activityEmptyTitle": "No se encontraron actividades",
+    "activityNewButton": "Nueva actividad",
+    "activityDialogTitleEdit": "Editar tarea",
+    "activityDialogTitleCreate": "Crear tarea",
+    "activityNameHint": "Nombre",
+    "activityStartLabel": "Inicio",
+    "activityEndLabel": "Fin",
+    "activityDeadlineLabel": "Fecha límite",
+    "activityCategoryLabel": "Categoría",
+    "activityCategoryAssignment": "Actividad",
+    "activityCategoryExam": "Examen",
+    "activityDetailsHint": "Detalles...",
+    "activityNameRequired": "El nombre es obligatorio",
+    "activityCreateError": "Error al guardar la actividad",
+    "activitySaveButton": "Guardar",
+    "activityCreateButton": "Crear",
+    "activityUntitled": "Sin título",
+    "activityMenuEdit": "Editar",
+    "activityMenuDelete": "Eliminar",
+    "activityMenuMarkComplete": "Marcar como completada",
+    "activityMenuUnmarkComplete": "Marcar como pendiente",
+    "activityTimeRange": "{start} - {end}",
+    "roomsEmptyTitle": "No se encontraron asignaturas",
+    "roomsNoName": "Asignatura sin nombre",
+    "roomsSubtitle": "Clase {group} • {year} / {term}",
+    "roomsNewPostTitle": "Nuevo post",
+    "roomsPostTitleHint": "Título",
+    "roomsPostBodyHint": "Escribe tu pregunta o resumen...",
+    "roomsAttachPdf": "Adjuntar PDF",
+    "roomsNoAttachment": "Sin archivo",
+    "roomsAttachmentReadError": "No se pudo leer el archivo adjunto",
+    "roomsAttachmentTooLarge": "Archivo demasiado grande — el máximo permitido es {maxSize} MB",
+    "roomsUploading": "Subiendo...",
+    "roomsPublishButton": "Publicar",
+    "roomsDeletePostTitle": "Eliminar post",
+    "roomsDeletePostMessage": "¿Desea eliminar este post?",
+    "roomsDeletePost": "Eliminar",
+    "roomsReplyTitle": "Responder",
+    "roomsReplyHint": "Escribe tu respuesta...",
+    "roomsReplyButton": "Responder",
+    "roomsRepliesCount": "{count} {count, plural, one {respuesta} other {respuestas}}",
+    "roomsRespondAction": "Responder",
+    "roomsNoPosts": "Aún no hay publicaciones. ¡Crea la primera!",
+    "roomsNewPostFab": "Nuevo post",
+    "roomsAttachmentDefaultName": "Adjunto.pdf",
+    "roomsAnonymous": "Anónimo",
+    "notificationsEmptyTitle": "No hay notificaciones",
+    "notificationsDefaultTitle": "Notificación",
+    "@activityMigrationDone": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@activityTimeRange": {
+        "placeholders": {
+            "start": {},
+            "end": {}
+        }
+    },
+    "@roomsSubtitle": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@roomsAttachmentTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "int"
+            }
+        }
+    },
+    "@roomsRepliesCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
+}

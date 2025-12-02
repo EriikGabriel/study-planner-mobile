@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
@@ -31,6 +32,7 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -44,7 +46,7 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
                   Icon(Icons.forum_outlined, size: 64, color: cs.secondaryText),
                   const SizedBox(height: 12),
                   Text(
-                    'Nenhuma disciplina encontrada',
+                    loc.roomsEmptyTitle,
                     style: GoogleFonts.poppins(
                       color: cs.onSurface.withOpacity(0.85),
                     ),
@@ -54,7 +56,7 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
                     onPressed: widget.onRefresh,
                     icon: Icon(Icons.refresh, color: cs.onSurface),
                     label: Text(
-                      'Recarregar',
+                      loc.commonReload,
                       style: TextStyle(color: cs.onSurface),
                     ),
                   ),
@@ -66,9 +68,14 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, idx) {
                 final s = widget.subjects[idx];
-                final title = s['nome'] ?? s['atividade'] ?? 'Sem nome';
-                final subtitle =
-                    'Turma ${s['turma'] ?? '-'} • ${s['ano'] ?? '-'} / ${s['periodo'] ?? '-'}';
+                final rawTitle =
+                    s['nome']?.toString() ?? s['atividade']?.toString() ?? '';
+                final title =
+                    rawTitle.isNotEmpty ? rawTitle : loc.roomsNoName;
+                final group = s['turma']?.toString() ?? '-';
+                final year = s['ano']?.toString() ?? '-';
+                final term = s['periodo']?.toString() ?? '-';
+                final subtitle = loc.roomsSubtitle(group, year, term);
                 return GestureDetector(
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
@@ -156,6 +163,8 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
   List<Map<String, dynamic>> _posts = [];
   bool _loading = true;
 
+  AppLocalizations get loc => AppLocalizations.of(context)!;
+
   /// Gera um ID único para a sala baseado na disciplina, turma, ano e período
   /// Isso garante que todos os alunos da mesma turma compartilhem a mesma sala
   String _getRoomId() {
@@ -215,6 +224,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx2, setState2) {
+            final loc = AppLocalizations.of(ctx2)!;
 
             Future<void> pickPdf() async {
               final res = await FilePicker.platform.pickFiles(
@@ -253,7 +263,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Novo post',
+                      loc.roomsNewPostTitle,
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -264,7 +274,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                     TextField(
                       controller: titleCtrl,
                       decoration: InputDecoration(
-                        hintText: 'Título',
+                        hintText: loc.roomsPostTitleHint,
                         filled: true,
                         fillColor: Theme.of(ctx2).brightness == Brightness.dark
                             ? Theme.of(ctx2).cardColor
@@ -284,7 +294,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                       controller: bodyCtrl,
                       maxLines: 6,
                       decoration: InputDecoration(
-                        hintText: 'Escreva sua pergunta ou resumo...',
+                        hintText: loc.roomsPostBodyHint,
                         filled: true,
                         fillColor: Theme.of(ctx2).brightness == Brightness.dark
                             ? Theme.of(ctx2).cardColor
@@ -305,12 +315,12 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                         OutlinedButton.icon(
                           onPressed: pickPdf,
                           icon: const Icon(Icons.attach_file),
-                          label: const Text('Anexar PDF'),
+                          label: Text(loc.roomsAttachPdf),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            pickedName ?? 'Nenhum anexo',
+                            pickedName ?? loc.roomsNoAttachment,
                             style: GoogleFonts.poppins(
                               color: Theme.of(ctx2).colorScheme.secondaryText,
                             ),
@@ -350,9 +360,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                           ScaffoldMessenger.of(
                                             ctx2,
                                           ).showSnackBar(
-                                            const SnackBar(
+                                            SnackBar(
                                               content: Text(
-                                                'Não foi possível ler o arquivo anexado',
+                                                loc.roomsAttachmentReadError,
                                               ),
                                             ),
                                           );
@@ -366,9 +376,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                           pickedData!.lengthInBytes >
                                               maxFileBytes) {
                                         ScaffoldMessenger.of(ctx2).showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text(
-                                              'Arquivo muito grande — máximo permitido: 10 MB',
+                                              loc.roomsAttachmentTooLarge(10),
                                             ),
                                           ),
                                         );
@@ -382,7 +392,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                               subjectId: roomId,
                                               filename:
                                                   pickedName ??
-                                                  'attachment.pdf',
+                                                  loc.roomsAttachmentDefaultName,
                                               data: pickedData!,
                                               onProgress: (p) {
                                                 setState2(() {
@@ -406,7 +416,8 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                     if (attachmentUrl != null) {
                                       post['attachmentUrl'] = attachmentUrl;
                                       post['attachmentName'] =
-                                          attachmentName ?? 'attachment.pdf';
+                                          attachmentName ??
+                                          loc.roomsAttachmentDefaultName;
                                     }
                                     final saved =
                                         await FirebaseDataService.saveRoomPost(
@@ -446,12 +457,12 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                       Text(
                                         uploadProgress > 0
                                             ? '${(uploadProgress * 100).toStringAsFixed(0)}%'
-                                            : 'Enviando...',
+                                            : loc.roomsUploading,
                                         style: GoogleFonts.poppins(),
                                       ),
                                     ],
                                   )
-                                : const Text('Publicar'),
+                                : Text(loc.roomsPublishButton),
                           ),
                         ),
                       ],
@@ -478,23 +489,27 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
       context: context,
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
+        final loc = AppLocalizations.of(ctx)!;
         return AlertDialog(
           backgroundColor: Theme.of(ctx).brightness == Brightness.dark
               ? Theme.of(ctx).cardColor
               : cs.surface,
-          title: Text('Excluir post', style: TextStyle(color: cs.onSurface)),
+          title: Text(loc.roomsDeletePostTitle,
+              style: TextStyle(color: cs.onSurface)),
           content: Text(
-            'Deseja excluir este post?',
+            loc.roomsDeletePostMessage,
             style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text('Cancelar', style: TextStyle(color: cs.onSurface)),
+              child:
+                  Text(loc.commonCancel, style: TextStyle(color: cs.onSurface)),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text('Excluir', style: TextStyle(color: cs.primary)),
+              child:
+                  Text(loc.roomsDeletePost, style: TextStyle(color: cs.primary)),
             ),
           ],
         );
@@ -531,7 +546,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Responder',
+                AppLocalizations.of(ctx)!.roomsReplyTitle,
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -543,7 +558,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                 controller: replyCtrl,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'Escreva sua resposta...',
+                  hintText: AppLocalizations.of(ctx)!.roomsReplyHint,
                   filled: true,
                   fillColor: Theme.of(ctx).brightness == Brightness.dark
                       ? Theme.of(ctx).cardColor
@@ -576,7 +591,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                         );
                         Navigator.of(ctx).pop(saved);
                       },
-                      child: const Text('Responder'),
+                      child: Text(AppLocalizations.of(ctx)!.roomsReplyButton),
                     ),
                   ),
                 ],
@@ -592,8 +607,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        widget.subject['nome'] ?? widget.subject['atividade'] ?? 'Sala';
+    final rawTitle = widget.subject['nome']?.toString() ??
+      widget.subject['atividade']?.toString() ?? '';
+    final title = rawTitle.isNotEmpty ? rawTitle : loc.roomsNoName;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -617,7 +633,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
             : _posts.isEmpty
             ? Center(
                 child: Text(
-                  'Nenhum post ainda. Crie o primeiro!',
+                  loc.roomsNoPosts,
                   style: GoogleFonts.poppins(color: cs.secondaryText),
                 ),
               )
@@ -626,7 +642,15 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, idx) {
                   final p = _posts[idx];
-                  final author = p['authorName'] ?? p['authorEmail'] ?? 'Anon';
+                  final postTitleRaw = p['title']?.toString().trim() ?? '';
+                  final postTitle =
+                      postTitleRaw.isNotEmpty ? postTitleRaw : loc.activityUntitled;
+                    final author =
+                      p['authorName'] ?? p['authorEmail'] ?? loc.roomsAnonymous;
+                  final postAuthorEmail = p['authorEmail']?.toString() ?? '';
+                  final currentUserEmail = ref.read(userProvider)?.email ?? '';
+                  final isAuthor = postAuthorEmail.isNotEmpty && 
+                                   postAuthorEmail == currentUserEmail;
                   final created = DateTime.tryParse(
                     p['createdAt']?.toString() ?? '',
                   );
@@ -669,7 +693,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                p['title'] ?? '(sem título)',
+                                postTitle,
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -677,18 +701,19 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                 ),
                               ),
                             ),
-                            PopupMenuButton<int>(
-                              onSelected: (v) {
-                                if (v == 1)
-                                  _deletePost(p['id']?.toString() ?? '');
-                              },
-                              itemBuilder: (_) => [
-                                const PopupMenuItem(
-                                  value: 1,
-                                  child: Text('Excluir'),
-                                ),
-                              ],
-                            ),
+                            if (isAuthor)
+                              PopupMenuButton<int>(
+                                onSelected: (v) {
+                                  if (v == 1)
+                                    _deletePost(p['id']?.toString() ?? '');
+                                },
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 1,
+                                    child: Text(loc.roomsDeletePost),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -718,7 +743,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                 Expanded(
                                   child: Text(
                                     p['attachmentName']?.toString() ??
-                                        'Anexo.pdf',
+                                        loc.roomsAttachmentDefaultName,
                                     style: GoogleFonts.poppins(
                                       color: cs.primary,
                                       fontWeight: FontWeight.w600,
@@ -772,14 +797,14 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                 color: cs.primary,
                               ),
                               label: Text(
-                                'Responder',
+                                loc.roomsRespondAction,
                                 style: GoogleFonts.poppins(color: cs.primary),
                               ),
                             ),
                             const SizedBox(width: 8),
                             if (repliesList.isNotEmpty)
                               Text(
-                                '${repliesList.length} resposta${repliesList.length == 1 ? '' : 's'}',
+                                loc.roomsRepliesCount(repliesList.length),
                                 style: GoogleFonts.poppins(
                                   color: cs.secondaryText,
                                 ),
@@ -794,7 +819,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                           Column(
                             children: repliesList.map((r) {
                               final rAuthor =
-                                  r['authorName'] ?? r['authorEmail'] ?? 'Anon';
+                                  r['authorName'] ??
+                                  r['authorEmail'] ??
+                                  loc.roomsAnonymous;
                               final rCreated = DateTime.tryParse(
                                 r['createdAt']?.toString() ?? '',
                               );
@@ -859,7 +886,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
         backgroundColor: cs.primary,
         onPressed: _showNewPostDialog,
         icon: const Icon(Icons.add_comment_rounded),
-        label: const Text('Novo post'),
+        label: Text(loc.roomsNewPostFab),
       ),
     );
   }

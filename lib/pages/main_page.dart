@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/notifications_service.dart';
@@ -75,6 +77,36 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   Widget build(BuildContext ctx) {
     final theme = Theme.of(ctx).colorScheme;
+    final loc = AppLocalizations.of(ctx)!;
+    final tabTitles = [
+      loc.mainTabAgenda,
+      loc.mainTabActivities,
+      loc.mainTabRooms,
+      loc.mainTabNotifications,
+      loc.mainTabSettings,
+    ];
+    final navItems = [
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.calendar_today_rounded),
+        label: loc.mainTabAgenda,
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.check_circle_outline_rounded),
+        label: loc.mainTabActivities,
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.forum_outlined),
+        label: loc.mainTabRooms,
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.notifications_none_rounded),
+        label: loc.mainTabNotifications,
+      ),
+      BottomNavigationBarItem(
+        icon: const Icon(Icons.settings),
+        label: loc.mainTabSettings,
+      ),
+    ];
 
     return Scaffold(
       backgroundColor: theme.primaryBackground,
@@ -82,15 +114,7 @@ class _MainPageState extends ConsumerState<MainPage> {
         backgroundColor: theme.primaryBackground,
         elevation: 0,
         title: Text(
-          _selectedIndex == 0
-              ? 'Agenda'
-              : _selectedIndex == 1
-              ? 'Atividades'
-              : _selectedIndex == 2
-              ? 'Salas'
-              : _selectedIndex == 3
-              ? 'Notificações'
-              : 'Configurações',
+          tabTitles[_selectedIndex],
           style: GoogleFonts.poppins(
             color: theme.primaryText,
             fontWeight: FontWeight.w600,
@@ -118,28 +142,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_rounded),
-            label: 'Agenda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline_rounded),
-            label: 'Atividades',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.forum_outlined),
-            label: 'Salas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none_rounded),
-            label: 'Notificações',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configurações',
-          ),
-        ],
+        items: navItems,
       ),
 
       // corpo alternável
@@ -204,22 +207,13 @@ class _AgendaPageState extends State<AgendaPage> {
     });
   }
 
-  String _getMonthName() {
-    final months = [
-      'Janeiro',
-      'Fevereiro',
-      'Março',
-      'Abril',
-      'Maio',
-      'Junho',
-      'Julho',
-      'Agosto',
-      'Setembro',
-      'Outubro',
-      'Novembro',
-      'Dezembro',
-    ];
-    return months[_currentMonth.month - 1];
+  String _getMonthName(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final formatted = DateFormat.MMMM(locale.toLanguageTag()).format(
+      _currentMonth,
+    );
+    final sentenceCase = toBeginningOfSentenceCase(formatted);
+    return sentenceCase;
   }
 
   bool _isCurrentWeek() {
@@ -233,23 +227,28 @@ class _AgendaPageState extends State<AgendaPage> {
         _selectedWeekStart.day == currentMonday.day;
   }
 
-  List<Map<String, dynamic>> _getWeekDays() {
+  List<Map<String, dynamic>> _getWeekDays(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final abbreviator = DateFormat('EEE', locale.toLanguageTag());
+    const dayValues = [
+      'SEGUNDA',
+      'TERCA',
+      'QUARTA',
+      'QUINTA',
+      'SEXTA',
+      'SABADO',
+      'DOMINGO',
+    ];
+
     return List.generate(7, (index) {
       final day = _selectedWeekStart.add(Duration(days: index));
-      final dayNames = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-      final dayValues = [
-        'SEGUNDA',
-        'TERCA',
-        'QUARTA',
-        'QUINTA',
-        'SEXTA',
-        'SABADO',
-        'DOMINGO',
-      ];
+      final labelRaw = abbreviator.format(day);
+      final sentenceCase = toBeginningOfSentenceCase(labelRaw);
+      final label = sentenceCase;
 
       return {
         'day': day.day.toString(),
-        'label': dayNames[index],
+        'label': label,
         'value': dayValues[index],
         'date': day,
       };
@@ -259,7 +258,8 @@ class _AgendaPageState extends State<AgendaPage> {
   @override
   Widget build(BuildContext ctx) {
     final theme = Theme.of(ctx).colorScheme;
-    final weekDays = _getWeekDays();
+    final loc = AppLocalizations.of(ctx)!;
+    final weekDays = _getWeekDays(ctx);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -279,7 +279,7 @@ class _AgendaPageState extends State<AgendaPage> {
                 onPressed: _previousMonth,
               ),
               Text(
-                "${_getMonthName()} ${_currentMonth.year}",
+                "${_getMonthName(ctx)} ${_currentMonth.year}",
                 style: GoogleFonts.poppins(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -335,7 +335,12 @@ class _AgendaPageState extends State<AgendaPage> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
-                      _buildDayCard("Todos", "", _selectedDay == null, null),
+                      _buildDayCard(
+                        loc.agendaFilterAll,
+                        '',
+                        _selectedDay == null,
+                        null,
+                      ),
                       ...weekDays.map(
                         (day) => _buildDayCard(
                           day['day']!,
@@ -374,9 +379,12 @@ class _AgendaPageState extends State<AgendaPage> {
             children: [
               Expanded(
                 child: Text(
-                  _selectedDay == null
-                      ? "Minhas Matérias"
-                      : _getDayDisplayName(_selectedDay!).replaceAll("📅 ", ""),
+                    _selectedDay == null
+                      ? loc.agendaDefaultSectionTitle
+                      : _getDayDisplayName(_selectedDay!, loc).replaceAll(
+                        "📅 ",
+                        '',
+                      ),
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -391,7 +399,7 @@ class _AgendaPageState extends State<AgendaPage> {
                       _selectedDay = null;
                     });
                   },
-                  child: const Text("Ver todos"),
+                  child: Text(loc.agendaClearFilter),
                 ),
               if (!_isCurrentWeek())
                 TextButton.icon(
@@ -406,7 +414,7 @@ class _AgendaPageState extends State<AgendaPage> {
                     });
                   },
                   icon: const Icon(Icons.today, size: 16),
-                  label: const Text("Hoje"),
+                  label: Text(loc.agendaGoToToday),
                 ),
             ],
           ),
@@ -428,7 +436,7 @@ class _AgendaPageState extends State<AgendaPage> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Nenhuma matéria encontrada',
+                          loc.agendaEmptyTitle,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -438,26 +446,29 @@ class _AgendaPageState extends State<AgendaPage> {
                         TextButton.icon(
                           onPressed: widget.onRefresh,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Recarregar'),
+                          label: Text(loc.agendaEmptyAction),
                         ),
                       ],
                     ),
                   )
-                : _buildGroupedSubjectsList(theme),
+                : _buildGroupedSubjectsList(theme, loc),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGroupedSubjectsList(ColorScheme theme) {
+  Widget _buildGroupedSubjectsList(
+    ColorScheme theme,
+    AppLocalizations loc,
+  ) {
     // Agrupa matérias por dia da semana
     final Map<String, List<Map<String, dynamic>>> groupedByDay = {};
 
     for (var subject in widget.subjects) {
       final horarios = subject['horarios'] as List<dynamic>? ?? [];
       if (horarios.isNotEmpty) {
-        final dia = horarios[0]['dia']?.toString() ?? 'Sem dia definido';
+        final dia = horarios[0]['dia']?.toString() ?? loc.agendaNoDayDefined;
         if (!groupedByDay.containsKey(dia)) {
           groupedByDay[dia] = [];
         }
@@ -492,7 +503,7 @@ class _AgendaPageState extends State<AgendaPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nenhuma matéria neste dia',
+              loc.agendaEmptyDayTitle,
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
@@ -502,7 +513,7 @@ class _AgendaPageState extends State<AgendaPage> {
                   _selectedDay = null;
                 });
               },
-              child: const Text('Ver todas as matérias'),
+              child: Text(loc.agendaEmptyDayAction),
             ),
           ],
         ),
@@ -533,7 +544,7 @@ class _AgendaPageState extends State<AgendaPage> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    _getDayDisplayName(dia),
+                    _getDayDisplayName(dia, loc),
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -542,7 +553,7 @@ class _AgendaPageState extends State<AgendaPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '(${materiasNoDia.length} ${materiasNoDia.length == 1 ? "matéria" : "matérias"})',
+                    loc.agendaSubjectsCount(materiasNoDia.length),
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       color: theme.secondaryText,
@@ -558,7 +569,7 @@ class _AgendaPageState extends State<AgendaPage> {
               final subject = entry.value;
               final horarios = subject['horarios'] as List<dynamic>? ?? [];
 
-              String timeDisplay = "Horário não definido";
+              String timeDisplay = loc.agendaNoSchedule;
               if (horarios.isNotEmpty) {
                 final horario = horarios[0];
                 final inicio =
@@ -569,10 +580,13 @@ class _AgendaPageState extends State<AgendaPage> {
                     "$inicio - $fim${sala.isNotEmpty ? ' • $sala' : ''}";
               }
 
+              final turma = subject['turma']?.toString() ?? '-';
+              final ano = subject['ano']?.toString() ?? '-';
+              final periodo = subject['periodo']?.toString() ?? '-';
+
               return TaskCard(
-                title: subject['nome'] ?? 'Sem nome',
-                subtitle:
-                    "Turma ${subject['turma']} • ${subject['ano']}/${subject['periodo']}",
+                title: subject['nome']?.toString() ?? loc.agendaNoName,
+                subtitle: loc.agendaClassLabel(turma, ano, periodo),
                 time: timeDisplay,
                 color: _getColorForIndex(dayIndex * 10 + index),
                 avatars: const [],
@@ -615,31 +629,31 @@ class _AgendaPageState extends State<AgendaPage> {
     }
   }
 
-  String _getDayDisplayName(String dia) {
+  String _getDayDisplayName(String dia, AppLocalizations loc) {
     final diaUpper = dia.toUpperCase();
     switch (diaUpper) {
       case 'SEGUNDA':
       case 'SEGUNDA-FEIRA':
-        return '📅 Segunda-feira';
+        return '📅 ${loc.agendaDayMonday}';
       case 'TERCA':
       case 'TERÇA':
       case 'TERÇA-FEIRA':
       case 'TERCA-FEIRA':
-        return '📅 Terça-feira';
+        return '📅 ${loc.agendaDayTuesday}';
       case 'QUARTA':
       case 'QUARTA-FEIRA':
-        return '📅 Quarta-feira';
+        return '📅 ${loc.agendaDayWednesday}';
       case 'QUINTA':
       case 'QUINTA-FEIRA':
-        return '📅 Quinta-feira';
+        return '📅 ${loc.agendaDayThursday}';
       case 'SEXTA':
       case 'SEXTA-FEIRA':
-        return '📅 Sexta-feira';
+        return '📅 ${loc.agendaDayFriday}';
       case 'SABADO':
       case 'SÁBADO':
-        return '📅 Sábado';
+        return '📅 ${loc.agendaDaySaturday}';
       case 'DOMINGO':
-        return '📅 Domingo';
+        return '📅 ${loc.agendaDaySunday}';
       default:
         return '📅 $dia';
     }
@@ -856,25 +870,26 @@ class _TaskCardState extends State<TaskCard>
   Future<void> _editCounts() async {
     final attendedCtrl = TextEditingController(text: _attended.toString());
     final missedCtrl = TextEditingController(text: _missed.toString());
+    final loc = AppLocalizations.of(context)!;
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Editar contagem'),
+        title: Text(loc.attendanceDialogTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: attendedCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Aulas realizadas (já ocorridas)',
+              decoration: InputDecoration(
+                labelText: loc.attendanceDialogAttendedLabel,
               ),
             ),
             TextField(
               controller: missedCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Faltas (aulas perdidas)',
+              decoration: InputDecoration(
+                labelText: loc.attendanceDialogMissedLabel,
               ),
             ),
           ],
@@ -882,11 +897,11 @@ class _TaskCardState extends State<TaskCard>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(loc.attendanceDialogCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salvar'),
+            child: Text(loc.attendanceDialogSave),
           ),
         ],
       ),
@@ -916,7 +931,11 @@ class _TaskCardState extends State<TaskCard>
 
   @override
   Widget build(BuildContext context) {
-    final pct = (_percentage * 100).toStringAsFixed(0);
+    final loc = AppLocalizations.of(context)!;
+    final pctValue = (_percentage * 100).round();
+    final presenceLabel = loc.attendancePresence(pctValue);
+    final attendedLabel = loc.attendanceAttendedLabel(_attended);
+    final missedLabel = loc.attendanceMissedLabel(_missed);
     // number of additional classes needed to reach 75% is computed where needed
     final cs = Theme.of(context).colorScheme;
     // Force white titles on subject cards for consistent contrast
@@ -1063,7 +1082,7 @@ class _TaskCardState extends State<TaskCard>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Presença: $pct%',
+                                                presenceLabel,
                                               style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w700,
                                                 color: cs.onSurface,
@@ -1071,7 +1090,7 @@ class _TaskCardState extends State<TaskCard>
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                              'Aulas realizadas: $_attended',
+                                                attendedLabel,
                                               style: GoogleFonts.poppins(
                                                 color: cs.onSurface.withOpacity(
                                                   0.9,
@@ -1079,7 +1098,7 @@ class _TaskCardState extends State<TaskCard>
                                               ),
                                             ),
                                             Text(
-                                              'Faltas: $_missed',
+                                                missedLabel,
                                               style: GoogleFonts.poppins(
                                                 color: cs.onSurface.withOpacity(
                                                   0.9,
@@ -1112,7 +1131,7 @@ class _TaskCardState extends State<TaskCard>
                                               elevation: 2,
                                             ),
                                             child: Text(
-                                              'Adicionar aula',
+                                              loc.attendanceAddClass,
                                               style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -1138,7 +1157,7 @@ class _TaskCardState extends State<TaskCard>
                                               elevation: 2,
                                             ),
                                             child: Text(
-                                              'Marcar falta',
+                                              loc.attendanceMarkAbsence,
                                               style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -1155,7 +1174,7 @@ class _TaskCardState extends State<TaskCard>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Presença: $pct%',
+                                      presenceLabel,
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w700,
                                         color: cs.onSurface,
@@ -1163,13 +1182,13 @@ class _TaskCardState extends State<TaskCard>
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Aulas realizadas: $_attended',
+                                      attendedLabel,
                                       style: GoogleFonts.poppins(
                                         color: cs.onSurface.withOpacity(0.9),
                                       ),
                                     ),
                                     Text(
-                                      'Faltas: $_missed',
+                                      missedLabel,
                                       style: GoogleFonts.poppins(
                                         color: cs.onSurface.withOpacity(0.9),
                                       ),
@@ -1196,7 +1215,7 @@ class _TaskCardState extends State<TaskCard>
                                         width: double.infinity,
                                         child: Center(
                                           child: Text(
-                                            'Adicionar aula',
+                                            loc.attendanceAddClass,
                                             style: GoogleFonts.poppins(
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -1226,7 +1245,7 @@ class _TaskCardState extends State<TaskCard>
                                         width: double.infinity,
                                         child: Center(
                                           child: Text(
-                                            'Marcar falta',
+                                            loc.attendanceMarkAbsence,
                                             style: GoogleFonts.poppins(
                                               fontWeight: FontWeight.w600,
                                             ),
@@ -1245,7 +1264,7 @@ class _TaskCardState extends State<TaskCard>
                           TextButton(
                             onPressed: _editCounts,
                             child: Text(
-                              'Editar contagem',
+                              loc.attendanceEditCounts,
                               style: GoogleFonts.poppins(color: cs.primary),
                             ),
                           ),

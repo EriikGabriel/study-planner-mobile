@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/theme/app_theme.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -67,6 +68,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primaryBackground,
       body: Padding(
@@ -76,7 +78,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             : _notifications.isEmpty
             ? Center(
                 child: Text(
-                  'Nenhuma notificação',
+                  loc.notificationsEmptyTitle,
                   style: GoogleFonts.poppins(
                     color: Theme.of(context).colorScheme.secondaryText,
                   ),
@@ -87,7 +89,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, idx) {
                   final n = _notifications[idx];
-                  final title = n['title']?.toString() ?? 'Notificação';
+                  final rawTitle = n['title']?.toString().trim() ?? '';
+                  final title = rawTitle.isNotEmpty
+                      ? rawTitle
+                      : loc.notificationsDefaultTitle;
                   final body = n['body']?.toString() ?? '';
                   final when =
                       n['scheduledAt']?.toString() ??

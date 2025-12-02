@@ -1,126 +1,132 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_translate/flutter_translate.dart';
 import 'package:study_planner/pages/activity_page.dart';
 import 'package:study_planner/pages/login_page.dart';
 import 'package:study_planner/pages/main_page.dart';
 import 'package:study_planner/pages/settings_page.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/theme/app_theme.dart';
 import 'package:widgetbook/widgetbook.dart';
 
-void main() async {
-  // Inicializar flutter_translate
-  var delegate = await LocalizationDelegate.create(
-    fallbackLocale: 'pt_br',
-    supportedLocales: ['en', 'pt_br', 'es', 'fr', 'zh'],
-  );
-
+void main() {
   runApp(
-    LocalizedApp(
-      delegate,
-      ProviderScope(
-        child: Widgetbook.material(
-          addons: [
-            MaterialThemeAddon(
-              themes: [
-                WidgetbookTheme(name: 'Light', data: lightTheme),
-                WidgetbookTheme(name: 'Dark', data: darkTheme),
-              ],
-            ),
-            DeviceFrameAddon(
-              devices: [
-                Devices.ios.iPhoneSE,
-                Devices.ios.iPhone13,
-                Devices.android.smallPhone,
-                Devices.android.mediumPhone,
-              ],
-            ),
-            TextScaleAddon(scales: [0.85, 1.0, 1.15, 1.3]),
+    ProviderScope(
+      child: Widgetbook.material(
+        appBuilder: (context, child) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          locale: const Locale('pt'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
           ],
-          directories: [
-            WidgetbookCategory(
-              name: 'Pages',
-              children: [
-                WidgetbookComponent(
-                  name: 'Login Page',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Default',
-                      builder: (context) => const LoginPage(),
-                    ),
-                  ],
-                ),
-                WidgetbookComponent(
-                  name: 'Main Page',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Default',
-                      builder: (context) => const MainPage(),
-                    ),
-                  ],
-                ),
-                WidgetbookComponent(
-                  name: 'Activity Page',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Default',
-                      builder: (context) => const ActivityPage(),
-                    ),
-                  ],
-                ),
-                WidgetbookComponent(
-                  name: 'Settings Page',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Default',
-                      builder: (context) => const SettingsPage(),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            WidgetbookCategory(
-              name: 'Components',
-              children: [
-                WidgetbookComponent(
-                  name: 'Buttons',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Primary Button',
-                      builder: (context) => _buildPrimaryButton(),
-                    ),
-                    WidgetbookUseCase(
-                      name: 'Secondary Button',
-                      builder: (context) => _buildSecondaryButton(),
-                    ),
-                  ],
-                ),
-                WidgetbookComponent(
-                  name: 'Cards',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Activity Card',
-                      builder: (context) => _buildActivityCard(),
-                    ),
-                  ],
-                ),
-                WidgetbookComponent(
-                  name: 'Text Fields',
-                  useCases: [
-                    WidgetbookUseCase(
-                      name: 'Email Input',
-                      builder: (context) => _buildEmailField(),
-                    ),
-                    WidgetbookUseCase(
-                      name: 'Password Input',
-                      builder: (context) => _buildPasswordField(),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          home: child,
         ),
+        addons: [
+          MaterialThemeAddon(
+            themes: [
+              WidgetbookTheme(name: 'Light', data: lightTheme),
+              WidgetbookTheme(name: 'Dark', data: darkTheme),
+            ],
+          ),
+          DeviceFrameAddon(
+            devices: [
+              Devices.ios.iPhoneSE,
+              Devices.ios.iPhone13,
+              Devices.android.smallPhone,
+              Devices.android.mediumPhone,
+            ],
+          ),
+          TextScaleAddon(scales: [0.85, 1.0, 1.15, 1.3]),
+        ],
+        directories: [
+          WidgetbookCategory(
+            name: 'Pages',
+            children: [
+              WidgetbookComponent(
+                name: 'Login Page',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Default',
+                    builder: (context) => const LoginPage(),
+                  ),
+                ],
+              ),
+              WidgetbookComponent(
+                name: 'Main Page',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Default',
+                    builder: (context) => const MainPage(),
+                  ),
+                ],
+              ),
+              WidgetbookComponent(
+                name: 'Activity Page',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Default',
+                    builder: (context) => const ActivityPage(),
+                  ),
+                ],
+              ),
+              WidgetbookComponent(
+                name: 'Settings Page',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Default',
+                    builder: (context) => const SettingsPage(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          WidgetbookCategory(
+            name: 'Components',
+            children: [
+              WidgetbookComponent(
+                name: 'Buttons',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Primary Button',
+                    builder: (context) => _buildPrimaryButton(),
+                  ),
+                  WidgetbookUseCase(
+                    name: 'Secondary Button',
+                    builder: (context) => _buildSecondaryButton(),
+                  ),
+                ],
+              ),
+              WidgetbookComponent(
+                name: 'Cards',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Activity Card',
+                    builder: (context) => _buildActivityCard(),
+                  ),
+                ],
+              ),
+              WidgetbookComponent(
+                name: 'Text Fields',
+                useCases: [
+                  WidgetbookUseCase(
+                    name: 'Email Input',
+                    builder: (context) => _buildEmailField(),
+                  ),
+                  WidgetbookUseCase(
+                    name: 'Password Input',
+                    builder: (context) => _buildPasswordField(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     ),
   );

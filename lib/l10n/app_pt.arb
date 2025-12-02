@@ -1,0 +1,247 @@
+{
+    "@@locale": "pt",
+    "appTitle": "Study Planner",
+    "appTagline": "Mais que um planner, seu aliado na jornada acadêmica.",
+    "mandatoryField": "Campo obrigatório!",
+    "success": "Sucesso",
+    "userCreated": "Usuário criado",
+    "error": "Erro",
+    "wrongUserOrPassword": "Usuário ou senha incorretos",
+    "somethingWrong": "Algo deu errado. Por favor, tente novamente",
+    "musicForEveryone": "Música para todos",
+    "username": "Nome completo",
+    "password": "Senha",
+    "orLabel": " OU ",
+    "continueWithGoogle": "Continuar com o Google",
+    "dontHaveAccount": "Não tem uma conta? ",
+    "alreadyHaveAccount": "Já tem uma conta? ",
+    "loginSigninTitle": "Entrar com",
+    "loginSignupTitle": "Cadastre-se",
+    "loginEmail": "Email",
+    "loginPassword": "Senha",
+    "loginButton": "Entrar",
+    "loginButtonSignup": "Cadastrar",
+    "loginToggleSignup": "Não tem uma conta? Cadastre-se",
+    "loginToggleSignin": "Já tem uma conta? Entrar",
+    "loginSuccess": "Login realizado com sucesso!",
+    "loginEmailRequired": "Email é obrigatório",
+    "loginPasswordRequired": "Senha é obrigatória",
+    "loginInvalidEmail": "Email inválido",
+    "loginInvalidCredentials": "Email ou senha inválidos. Verifique seus dados.",
+    "loginUserNotFound": "Usuário não encontrado. Faça o cadastro primeiro.",
+    "loginWrongPassword": "Senha incorreta. Tente novamente.",
+    "loginUserDisabled": "Usuário desativado. Entre em contato com o suporte.",
+    "loginTooManyRequests": "Muitas tentativas de login. Tente mais tarde.",
+    "loginGenericError": "Erro ao fazer login",
+    "loginConnectionError": "Erro ao conectar",
+    "signupUsernameRequired": "Nome de usuário é obrigatório",
+    "signupPasswordTooShort": "A senha deve ter pelo menos 6 caracteres",
+    "signupAccountCreationError": "Email já cadastrado ou erro ao criar conta",
+    "signupUfscarInvalidCredentials": "Email ou senha inválidos na plataforma UFSCar.",
+    "signupSaveDataError": "Erro ao salvar dados. Tente novamente.",
+    "signupGenericError": "Erro ao criar conta",
+    "signupEmailAlreadyExists": "Este email já está cadastrado",
+    "signupWeakPassword": "Senha muito fraca. Use pelo menos 6 caracteres.",
+    "signupOperationNotAllowed": "Operação não permitida. Tente novamente mais tarde.",
+    "signupApiConnectionError": "Erro ao conectar com a API",
+    "settingsAppearanceSection": "Aparência",
+    "settingsAccountSection": "Conta",
+    "settingsAboutSection": "Sobre",
+    "settingsEditProfile": "Editar Perfil",
+    "settingsChangePassword": "Alterar Senha",
+    "settingsNotifications": "Notificações",
+    "settingsComingSoon": "Em desenvolvimento",
+    "settingsAutoPresenceTitle": "Presença automática",
+    "settingsAutoPresenceSubtitle": "Marcar presença automaticamente em novas disciplinas",
+    "settingsAutoPresenceSaveError": "Erro ao salvar configuração",
+    "settingsLanguageTitle": "Idioma",
+    "settingsLanguageDialogTitle": "Selecionar Idioma",
+    "settingsAboutApp": "Sobre o App",
+    "settingsPrivacyPolicy": "Política de Privacidade",
+    "settingsTermsOfUse": "Termos de Uso",
+    "settingsLogoutButton": "Sair da Conta",
+    "settingsLogoutTitle": "Sair da Conta",
+    "settingsLogoutMessage": "Tem certeza que deseja sair?",
+    "settingsLogoutCancel": "Cancelar",
+    "settingsLogoutConfirm": "Sair",
+    "settingsThemeTitle": "Modo Escuro",
+    "settingsThemeEnabled": "Ativado",
+    "settingsThemeDisabled": "Desativado",
+    "languagePortuguese": "Português",
+    "languageEnglish": "Inglês",
+    "languageSpanish": "Espanhol",
+    "languageFrench": "Francês",
+    "languageChinese": "Chinês",
+    "mainTabAgenda": "Agenda",
+    "mainTabActivities": "Atividades",
+    "mainTabRooms": "Salas",
+    "mainTabNotifications": "Notificações",
+    "mainTabSettings": "Configurações",
+    "agendaFilterAll": "Todos",
+    "agendaDefaultSectionTitle": "Minhas matérias",
+    "agendaClearFilter": "Ver todos",
+    "agendaGoToToday": "Hoje",
+    "agendaEmptyTitle": "Nenhuma matéria encontrada",
+    "agendaEmptyAction": "Recarregar",
+    "agendaEmptyDayTitle": "Nenhuma matéria neste dia",
+    "agendaEmptyDayAction": "Ver todas as matérias",
+    "agendaSubjectsCount": "({count} {count, plural, one {matéria} other {matérias}})",
+    "agendaNoSchedule": "Horário não definido",
+    "agendaClassLabel": "Turma {group} • {year}/{term}",
+    "agendaNoName": "Sem nome",
+    "agendaNoDayDefined": "Sem dia definido",
+    "agendaDayMonday": "Segunda-feira",
+    "agendaDayTuesday": "Terça-feira",
+    "agendaDayWednesday": "Quarta-feira",
+    "agendaDayThursday": "Quinta-feira",
+    "agendaDayFriday": "Sexta-feira",
+    "agendaDaySaturday": "Sábado",
+    "agendaDaySunday": "Domingo",
+    "attendanceDialogTitle": "Editar contagem",
+    "attendanceDialogAttendedLabel": "Aulas realizadas (já ocorridas)",
+    "attendanceDialogMissedLabel": "Faltas (aulas perdidas)",
+    "attendanceDialogCancel": "Cancelar",
+    "attendanceDialogSave": "Salvar",
+    "attendancePresence": "Presença: {percentage}%",
+    "attendanceAttendedLabel": "Aulas realizadas: {count}",
+    "attendanceMissedLabel": "Faltas: {count}",
+    "attendanceAddClass": "Adicionar aula",
+    "attendanceMarkAbsence": "Marcar falta",
+    "attendanceEditCounts": "Editar contagem",
+    "@agendaSubjectsCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@agendaClassLabel": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@attendancePresence": {
+        "placeholders": {
+            "percentage": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceAttendedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceMissedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "commonCancel": "Cancelar",
+    "commonDelete": "Excluir",
+    "commonUndo": "Desfazer",
+    "commonReload": "Recarregar",
+    "commonConfirm": "Confirmar",
+    "commonSave": "Salvar",
+    "commonCreate": "Criar",
+    "activitySectionToday": "Hoje",
+    "activitySectionTomorrow": "Amanhã",
+    "activityMigrationStart": "Iniciando migração de cores...",
+    "activityMigrationDone": "Migração concluída: {count} itens atualizados",
+    "activityMarkedDone": "Atividade marcada como concluída",
+    "activityMarkedPending": "Atividade marcada como pendente",
+    "activityDeleteTitle": "Excluir atividade",
+    "activityDeleteMessage": "Deseja excluir esta atividade?",
+    "activityDeleted": "Atividade excluída",
+    "activityDeleteError": "Erro ao excluir atividade",
+    "activityFilterPending": "Pendentes",
+    "activityFilterCompleted": "Concluídas",
+    "activityEmptyTitle": "Nenhuma atividade encontrada",
+    "activityNewButton": "Nova atividade",
+    "activityDialogTitleEdit": "Editar tarefa",
+    "activityDialogTitleCreate": "Criar tarefa",
+    "activityNameHint": "Nome",
+    "activityStartLabel": "Início",
+    "activityEndLabel": "Término",
+    "activityDeadlineLabel": "Prazo",
+    "activityCategoryLabel": "Categoria",
+    "activityCategoryAssignment": "Atividade",
+    "activityCategoryExam": "Prova",
+    "activityDetailsHint": "Detalhes...",
+    "activityNameRequired": "Nome é obrigatório",
+    "activityCreateError": "Erro ao salvar atividade",
+    "activitySaveButton": "Salvar",
+    "activityCreateButton": "Criar",
+    "activityUntitled": "Sem título",
+    "activityMenuEdit": "Editar",
+    "activityMenuDelete": "Excluir",
+    "activityMenuMarkComplete": "Marcar como concluída",
+    "activityMenuUnmarkComplete": "Marcar como pendente",
+    "activityTimeRange": "{start} - {end}",
+    "roomsEmptyTitle": "Nenhuma disciplina encontrada",
+    "roomsNoName": "Disciplina sem nome",
+    "roomsSubtitle": "Turma {group} • {year} / {term}",
+    "roomsNewPostTitle": "Novo post",
+    "roomsPostTitleHint": "Título",
+    "roomsPostBodyHint": "Escreva sua pergunta ou resumo...",
+    "roomsAttachPdf": "Anexar PDF",
+    "roomsNoAttachment": "Nenhum anexo",
+    "roomsAttachmentReadError": "Não foi possível ler o arquivo anexado",
+    "roomsAttachmentTooLarge": "Arquivo muito grande — máximo permitido: {maxSize} MB",
+    "roomsUploading": "Enviando...",
+    "roomsPublishButton": "Publicar",
+    "roomsDeletePostTitle": "Excluir post",
+    "roomsDeletePostMessage": "Deseja excluir este post?",
+    "roomsDeletePost": "Excluir",
+    "roomsReplyTitle": "Responder",
+    "roomsReplyHint": "Escreva sua resposta...",
+    "roomsReplyButton": "Responder",
+    "roomsRepliesCount": "{count} {count, plural, one {resposta} other {respostas}}",
+    "roomsRespondAction": "Responder",
+    "roomsNoPosts": "Nenhum post ainda. Crie o primeiro!",
+    "roomsNewPostFab": "Novo post",
+    "roomsAttachmentDefaultName": "Anexo.pdf",
+    "roomsAnonymous": "Anônimo",
+    "notificationsEmptyTitle": "Nenhuma notificação",
+    "notificationsDefaultTitle": "Notificação",
+    "@activityMigrationDone": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@activityTimeRange": {
+        "placeholders": {
+            "start": {},
+            "end": {}
+        }
+    },
+    "@roomsSubtitle": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@roomsAttachmentTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "int"
+            }
+        }
+    },
+    "@roomsRepliesCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
+}

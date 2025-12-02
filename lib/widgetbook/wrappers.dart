@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_translate/flutter_translate.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/pages/login_page.dart';
 
 /// Wrapper para exibir LoginPage no Widgetbook sem erros de inicialização
@@ -9,29 +10,20 @@ class LoginPagePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ProviderScope(
-          child: Localization(
-            child: Builder(builder: (context) => const LoginPage()),
-          ),
+    return ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const Scaffold(
+          body: LoginPage(),
         ),
       ),
-    );
-  }
-}
-
-/// Wrapper simples para LocalizationProvider
-class Localization extends StatelessWidget {
-  final Widget child;
-
-  const Localization({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return LocalizationProvider(
-      state: LocalizationProvider.of(context).state,
-      child: child,
     );
   }
 }

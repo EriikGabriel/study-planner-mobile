@@ -1,0 +1,247 @@
+{
+    "@@locale": "zh",
+    "appTitle": "Study Planner",
+    "appTagline": "不仅是日程规划，它是你学业旅程的伙伴。",
+    "mandatoryField": "必填字段！",
+    "success": "成功",
+    "userCreated": "用户已创建",
+    "error": "错误",
+    "wrongUserOrPassword": "用户名或密码错误",
+    "somethingWrong": "出错了。请再试一次",
+    "musicForEveryone": "为大家提供音乐",
+    "username": "全名",
+    "password": "密码",
+    "orLabel": " 或 ",
+    "continueWithGoogle": "使用Google继续",
+    "dontHaveAccount": "还没有账户？ ",
+    "alreadyHaveAccount": "已经有账户了？ ",
+    "loginSigninTitle": "使用以下方式登录",
+    "loginSignupTitle": "创建你的账户",
+    "loginEmail": "电子邮件",
+    "loginPassword": "密码",
+    "loginButton": "登录",
+    "loginButtonSignup": "注册",
+    "loginToggleSignup": "还没有账户？注册",
+    "loginToggleSignin": "已经有账户？登录",
+    "loginSuccess": "登录成功！",
+    "loginEmailRequired": "电子邮件是必填项",
+    "loginPasswordRequired": "密码是必填项",
+    "loginInvalidEmail": "电子邮件无效",
+    "loginInvalidCredentials": "电子邮件或密码无效。请检查你的数据。",
+    "loginUserNotFound": "未找到用户。请先注册。",
+    "loginWrongPassword": "密码错误。请重试。",
+    "loginUserDisabled": "用户已被禁用。请联系支持。",
+    "loginTooManyRequests": "登录尝试次数过多。请稍后再试。",
+    "loginGenericError": "登录时发生错误",
+    "loginConnectionError": "连接错误",
+    "signupUsernameRequired": "用户名是必填项",
+    "signupPasswordTooShort": "密码至少需要 6 个字符",
+    "signupAccountCreationError": "电子邮件已注册或创建账户时出错",
+    "signupUfscarInvalidCredentials": "UFSCar 平台上的电子邮件或密码无效。",
+    "signupSaveDataError": "保存数据时出错。请重试。",
+    "signupGenericError": "创建账户时发生错误",
+    "signupEmailAlreadyExists": "该电子邮件已注册",
+    "signupWeakPassword": "密码太弱。请至少使用 6 个字符。",
+    "signupOperationNotAllowed": "操作不允许。请稍后再试。",
+    "signupApiConnectionError": "连接 API 时出错",
+    "settingsAppearanceSection": "外观",
+    "settingsAccountSection": "账户",
+    "settingsAboutSection": "关于",
+    "settingsEditProfile": "编辑资料",
+    "settingsChangePassword": "更改密码",
+    "settingsNotifications": "通知",
+    "settingsComingSoon": "开发中",
+    "settingsAutoPresenceTitle": "自动签到",
+    "settingsAutoPresenceSubtitle": "为新的课程自动标记出勤",
+    "settingsAutoPresenceSaveError": "保存设置时出错",
+    "settingsLanguageTitle": "语言",
+    "settingsLanguageDialogTitle": "选择语言",
+    "settingsAboutApp": "关于应用",
+    "settingsPrivacyPolicy": "隐私政策",
+    "settingsTermsOfUse": "使用条款",
+    "settingsLogoutButton": "退出账户",
+    "settingsLogoutTitle": "退出账户",
+    "settingsLogoutMessage": "确定要退出吗？",
+    "settingsLogoutCancel": "取消",
+    "settingsLogoutConfirm": "退出",
+    "settingsThemeTitle": "深色模式",
+    "settingsThemeEnabled": "已启用",
+    "settingsThemeDisabled": "已停用",
+    "languagePortuguese": "葡萄牙语",
+    "languageEnglish": "英语",
+    "languageSpanish": "西班牙语",
+    "languageFrench": "法语",
+    "languageChinese": "中文",
+    "mainTabAgenda": "日程",
+    "mainTabActivities": "活动",
+    "mainTabRooms": "教室",
+    "mainTabNotifications": "通知",
+    "mainTabSettings": "设置",
+    "agendaFilterAll": "全部",
+    "agendaDefaultSectionTitle": "我的课程",
+    "agendaClearFilter": "查看全部",
+    "agendaGoToToday": "今天",
+    "agendaEmptyTitle": "未找到课程",
+    "agendaEmptyAction": "重新加载",
+    "agendaEmptyDayTitle": "这一天没有课程",
+    "agendaEmptyDayAction": "查看所有课程",
+    "agendaSubjectsCount": "({count} {count, plural, one {门课程} other {门课程}})",
+    "agendaNoSchedule": "未定义时间",
+    "agendaClassLabel": "班级 {group} • {year}/{term}",
+    "agendaNoName": "未命名课程",
+    "agendaNoDayDefined": "未设置日期",
+    "agendaDayMonday": "星期一",
+    "agendaDayTuesday": "星期二",
+    "agendaDayWednesday": "星期三",
+    "agendaDayThursday": "星期四",
+    "agendaDayFriday": "星期五",
+    "agendaDaySaturday": "星期六",
+    "agendaDaySunday": "星期日",
+    "attendanceDialogTitle": "编辑计数",
+    "attendanceDialogAttendedLabel": "已上课程（已进行）",
+    "attendanceDialogMissedLabel": "缺课（错过的课程）",
+    "attendanceDialogCancel": "取消",
+    "attendanceDialogSave": "保存",
+    "attendancePresence": "出勤率：{percentage}%",
+    "attendanceAttendedLabel": "已上课程：{count}",
+    "attendanceMissedLabel": "缺课：{count}",
+    "attendanceAddClass": "增加课程",
+    "attendanceMarkAbsence": "标记缺席",
+    "attendanceEditCounts": "编辑计数",
+    "@agendaSubjectsCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@agendaClassLabel": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@attendancePresence": {
+        "placeholders": {
+            "percentage": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceAttendedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceMissedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "commonCancel": "取消",
+    "commonDelete": "删除",
+    "commonUndo": "撤销",
+    "commonReload": "重新加载",
+    "commonConfirm": "确认",
+    "commonSave": "保存",
+    "commonCreate": "创建",
+    "activitySectionToday": "今天",
+    "activitySectionTomorrow": "明天",
+    "activityMigrationStart": "正在开始颜色迁移...",
+    "activityMigrationDone": "迁移完成：已更新 {count} 个项目",
+    "activityMarkedDone": "活动已标记为完成",
+    "activityMarkedPending": "活动已标记为待办",
+    "activityDeleteTitle": "删除活动",
+    "activityDeleteMessage": "要删除此活动吗？",
+    "activityDeleted": "活动已删除",
+    "activityDeleteError": "删除活动时出错",
+    "activityFilterPending": "待办",
+    "activityFilterCompleted": "已完成",
+    "activityEmptyTitle": "未找到活动",
+    "activityNewButton": "新建活动",
+    "activityDialogTitleEdit": "编辑任务",
+    "activityDialogTitleCreate": "创建任务",
+    "activityNameHint": "名称",
+    "activityStartLabel": "开始",
+    "activityEndLabel": "结束",
+    "activityDeadlineLabel": "截止日期",
+    "activityCategoryLabel": "类别",
+    "activityCategoryAssignment": "活动",
+    "activityCategoryExam": "考试",
+    "activityDetailsHint": "详情...",
+    "activityNameRequired": "名称为必填项",
+    "activityCreateError": "保存活动时出错",
+    "activitySaveButton": "保存",
+    "activityCreateButton": "创建",
+    "activityUntitled": "未命名",
+    "activityMenuEdit": "编辑",
+    "activityMenuDelete": "删除",
+    "activityMenuMarkComplete": "标记为已完成",
+    "activityMenuUnmarkComplete": "标记为待办",
+    "activityTimeRange": "{start} - {end}",
+    "roomsEmptyTitle": "未找到课程",
+    "roomsNoName": "未命名课程",
+    "roomsSubtitle": "班级 {group} • {year} / {term}",
+    "roomsNewPostTitle": "新帖子",
+    "roomsPostTitleHint": "标题",
+    "roomsPostBodyHint": "写下你的问题或摘要...",
+    "roomsAttachPdf": "附加 PDF",
+    "roomsNoAttachment": "没有附件",
+    "roomsAttachmentReadError": "无法读取附件",
+    "roomsAttachmentTooLarge": "文件过大 — 最大允许 {maxSize} MB",
+    "roomsUploading": "正在上传...",
+    "roomsPublishButton": "发布",
+    "roomsDeletePostTitle": "删除帖子",
+    "roomsDeletePostMessage": "要删除此帖子吗？",
+    "roomsDeletePost": "删除",
+    "roomsReplyTitle": "回复",
+    "roomsReplyHint": "写下你的回复...",
+    "roomsReplyButton": "回复",
+    "roomsRepliesCount": "{count} 条回复",
+    "roomsRespondAction": "回复",
+    "roomsNoPosts": "还没有帖子，快来发表第一条吧！",
+    "roomsNewPostFab": "新帖子",
+    "roomsAttachmentDefaultName": "附件.pdf",
+    "roomsAnonymous": "匿名",
+    "notificationsEmptyTitle": "暂无通知",
+    "notificationsDefaultTitle": "通知",
+    "@activityMigrationDone": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@activityTimeRange": {
+        "placeholders": {
+            "start": {},
+            "end": {}
+        }
+    },
+    "@roomsSubtitle": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@roomsAttachmentTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "int"
+            }
+        }
+    },
+    "@roomsRepliesCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
+}

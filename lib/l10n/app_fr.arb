@@ -1,0 +1,247 @@
+{
+    "@@locale": "fr",
+    "appTitle": "Study Planner",
+    "appTagline": "Plus qu'un planner, votre allié dans le parcours académique.",
+    "mandatoryField": "Champ obligatoire !",
+    "success": "Succès",
+    "userCreated": "Utilisateur créé",
+    "error": "Erreur",
+    "wrongUserOrPassword": "Utilisateur ou mot de passe incorrect",
+    "somethingWrong": "Quelque chose s'est mal passé. Veuillez réessayer",
+    "musicForEveryone": "Musique pour tous",
+    "username": "Nom complet",
+    "password": "Mot de passe",
+    "orLabel": " OU ",
+    "continueWithGoogle": "Continuer avec Google",
+    "dontHaveAccount": "Vous n'avez pas de compte ? ",
+    "alreadyHaveAccount": "Vous avez déjà un compte ? ",
+    "loginSigninTitle": "Connectez-vous avec",
+    "loginSignupTitle": "Créez votre compte",
+    "loginEmail": "E-mail",
+    "loginPassword": "Mot de passe",
+    "loginButton": "Se connecter",
+    "loginButtonSignup": "S'inscrire",
+    "loginToggleSignup": "Pas de compte ? Inscrivez-vous",
+    "loginToggleSignin": "Vous avez déjà un compte ? Connectez-vous",
+    "loginSuccess": "Connexion réalisée avec succès !",
+    "loginEmailRequired": "L'e-mail est obligatoire",
+    "loginPasswordRequired": "Le mot de passe est obligatoire",
+    "loginInvalidEmail": "E-mail invalide",
+    "loginInvalidCredentials": "E-mail ou mot de passe invalide. Vérifiez vos données.",
+    "loginUserNotFound": "Utilisateur introuvable. Inscrivez-vous d'abord.",
+    "loginWrongPassword": "Mot de passe incorrect. Réessayez.",
+    "loginUserDisabled": "Utilisateur désactivé. Contactez le support.",
+    "loginTooManyRequests": "Trop de tentatives de connexion. Réessayez plus tard.",
+    "loginGenericError": "Erreur lors de la connexion",
+    "loginConnectionError": "Erreur de connexion",
+    "signupUsernameRequired": "Le nom d'utilisateur est obligatoire",
+    "signupPasswordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+    "signupAccountCreationError": "E-mail déjà enregistré ou erreur lors de la création du compte",
+    "signupUfscarInvalidCredentials": "E-mail ou mot de passe invalide sur la plateforme UFSCar.",
+    "signupSaveDataError": "Erreur lors de l'enregistrement des données. Réessayez.",
+    "signupGenericError": "Erreur lors de la création du compte",
+    "signupEmailAlreadyExists": "Cet e-mail est déjà enregistré",
+    "signupWeakPassword": "Mot de passe trop faible. Utilisez au moins 6 caractères.",
+    "signupOperationNotAllowed": "Opération non autorisée. Réessayez plus tard.",
+    "signupApiConnectionError": "Erreur de connexion à l'API",
+    "settingsAppearanceSection": "Apparence",
+    "settingsAccountSection": "Compte",
+    "settingsAboutSection": "À propos",
+    "settingsEditProfile": "Modifier le profil",
+    "settingsChangePassword": "Changer le mot de passe",
+    "settingsNotifications": "Notifications",
+    "settingsComingSoon": "En développement",
+    "settingsAutoPresenceTitle": "Présence automatique",
+    "settingsAutoPresenceSubtitle": "Marquer automatiquement la présence dans les nouvelles matières",
+    "settingsAutoPresenceSaveError": "Erreur lors de l'enregistrement",
+    "settingsLanguageTitle": "Langue",
+    "settingsLanguageDialogTitle": "Sélectionner la langue",
+    "settingsAboutApp": "À propos de l'application",
+    "settingsPrivacyPolicy": "Politique de confidentialité",
+    "settingsTermsOfUse": "Conditions d'utilisation",
+    "settingsLogoutButton": "Se déconnecter",
+    "settingsLogoutTitle": "Se déconnecter",
+    "settingsLogoutMessage": "Êtes-vous sûr de vouloir quitter ?",
+    "settingsLogoutCancel": "Annuler",
+    "settingsLogoutConfirm": "Quitter",
+    "settingsThemeTitle": "Mode sombre",
+    "settingsThemeEnabled": "Activé",
+    "settingsThemeDisabled": "Désactivé",
+    "languagePortuguese": "Portugais",
+    "languageEnglish": "Anglais",
+    "languageSpanish": "Espagnol",
+    "languageFrench": "Français",
+    "languageChinese": "Chinois",
+    "mainTabAgenda": "Agenda",
+    "mainTabActivities": "Activités",
+    "mainTabRooms": "Salles",
+    "mainTabNotifications": "Notifications",
+    "mainTabSettings": "Paramètres",
+    "agendaFilterAll": "Tous",
+    "agendaDefaultSectionTitle": "Mes matières",
+    "agendaClearFilter": "Voir tout",
+    "agendaGoToToday": "Aujourd'hui",
+    "agendaEmptyTitle": "Aucune matière trouvée",
+    "agendaEmptyAction": "Recharger",
+    "agendaEmptyDayTitle": "Aucune matière ce jour-là",
+    "agendaEmptyDayAction": "Voir toutes les matières",
+    "agendaSubjectsCount": "({count} {count, plural, one {matière} other {matières}})",
+    "agendaNoSchedule": "Horaire non défini",
+    "agendaClassLabel": "Groupe {group} • {year}/{term}",
+    "agendaNoName": "Sans nom",
+    "agendaNoDayDefined": "Aucun jour défini",
+    "agendaDayMonday": "Lundi",
+    "agendaDayTuesday": "Mardi",
+    "agendaDayWednesday": "Mercredi",
+    "agendaDayThursday": "Jeudi",
+    "agendaDayFriday": "Vendredi",
+    "agendaDaySaturday": "Samedi",
+    "agendaDaySunday": "Dimanche",
+    "attendanceDialogTitle": "Modifier les compteurs",
+    "attendanceDialogAttendedLabel": "Cours réalisés (déjà effectués)",
+    "attendanceDialogMissedLabel": "Absences (cours manqués)",
+    "attendanceDialogCancel": "Annuler",
+    "attendanceDialogSave": "Enregistrer",
+    "attendancePresence": "Présence : {percentage}%",
+    "attendanceAttendedLabel": "Cours réalisés : {count}",
+    "attendanceMissedLabel": "Absences : {count}",
+    "attendanceAddClass": "Ajouter un cours",
+    "attendanceMarkAbsence": "Marquer une absence",
+    "attendanceEditCounts": "Modifier les compteurs",
+    "@agendaSubjectsCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@agendaClassLabel": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@attendancePresence": {
+        "placeholders": {
+            "percentage": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceAttendedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@attendanceMissedLabel": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "commonCancel": "Annuler",
+    "commonDelete": "Supprimer",
+    "commonUndo": "Annuler l'action",
+    "commonReload": "Recharger",
+    "commonConfirm": "Confirmer",
+    "commonSave": "Enregistrer",
+    "commonCreate": "Créer",
+    "activitySectionToday": "Aujourd'hui",
+    "activitySectionTomorrow": "Demain",
+    "activityMigrationStart": "Début de la migration des couleurs...",
+    "activityMigrationDone": "Migration terminée : {count} éléments mis à jour",
+    "activityMarkedDone": "Activité marquée comme terminée",
+    "activityMarkedPending": "Activité marquée comme en attente",
+    "activityDeleteTitle": "Supprimer l'activité",
+    "activityDeleteMessage": "Voulez-vous supprimer cette activité ?",
+    "activityDeleted": "Activité supprimée",
+    "activityDeleteError": "Erreur lors de la suppression de l'activité",
+    "activityFilterPending": "En attente",
+    "activityFilterCompleted": "Terminées",
+    "activityEmptyTitle": "Aucune activité trouvée",
+    "activityNewButton": "Nouvelle activité",
+    "activityDialogTitleEdit": "Modifier la tâche",
+    "activityDialogTitleCreate": "Créer une tâche",
+    "activityNameHint": "Nom",
+    "activityStartLabel": "Début",
+    "activityEndLabel": "Fin",
+    "activityDeadlineLabel": "Échéance",
+    "activityCategoryLabel": "Catégorie",
+    "activityCategoryAssignment": "Activité",
+    "activityCategoryExam": "Examen",
+    "activityDetailsHint": "Détails...",
+    "activityNameRequired": "Le nom est obligatoire",
+    "activityCreateError": "Erreur lors de l'enregistrement de l'activité",
+    "activitySaveButton": "Enregistrer",
+    "activityCreateButton": "Créer",
+    "activityUntitled": "Sans titre",
+    "activityMenuEdit": "Modifier",
+    "activityMenuDelete": "Supprimer",
+    "activityMenuMarkComplete": "Marquer comme terminée",
+    "activityMenuUnmarkComplete": "Marquer comme en attente",
+    "activityTimeRange": "{start} - {end}",
+    "roomsEmptyTitle": "Aucune matière trouvée",
+    "roomsNoName": "Matière sans nom",
+    "roomsSubtitle": "Groupe {group} • {year} / {term}",
+    "roomsNewPostTitle": "Nouveau post",
+    "roomsPostTitleHint": "Titre",
+    "roomsPostBodyHint": "Écrivez votre question ou résumé...",
+    "roomsAttachPdf": "Joindre un PDF",
+    "roomsNoAttachment": "Aucune pièce jointe",
+    "roomsAttachmentReadError": "Impossible de lire le fichier joint",
+    "roomsAttachmentTooLarge": "Fichier trop volumineux — taille maximale {maxSize} Mo",
+    "roomsUploading": "Téléversement...",
+    "roomsPublishButton": "Publier",
+    "roomsDeletePostTitle": "Supprimer le post",
+    "roomsDeletePostMessage": "Voulez-vous supprimer ce post ?",
+    "roomsDeletePost": "Supprimer",
+    "roomsReplyTitle": "Répondre",
+    "roomsReplyHint": "Écrivez votre réponse...",
+    "roomsReplyButton": "Répondre",
+    "roomsRepliesCount": "{count} {count, plural, one {réponse} other {réponses}}",
+    "roomsRespondAction": "Répondre",
+    "roomsNoPosts": "Aucun post pour le moment. Créez le premier !",
+    "roomsNewPostFab": "Nouveau post",
+    "roomsAttachmentDefaultName": "Piece-jointe.pdf",
+    "roomsAnonymous": "Anonyme",
+    "notificationsEmptyTitle": "Aucune notification",
+    "notificationsDefaultTitle": "Notification",
+    "@activityMigrationDone": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    },
+    "@activityTimeRange": {
+        "placeholders": {
+            "start": {},
+            "end": {}
+        }
+    },
+    "@roomsSubtitle": {
+        "placeholders": {
+            "group": {},
+            "year": {},
+            "term": {}
+        }
+    },
+    "@roomsAttachmentTooLarge": {
+        "placeholders": {
+            "maxSize": {
+                "type": "int"
+            }
+        }
+    },
+    "@roomsRepliesCount": {
+        "placeholders": {
+            "count": {
+                "type": "int"
+            }
+        }
+    }
+}

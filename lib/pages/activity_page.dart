@@ -1,49 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
-
-String _sectionHeader(DateTime d) {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final target = DateTime(d.year, d.month, d.day);
-  if (target == today) return 'Hoje';
-  if (target == today.add(const Duration(days: 1))) return 'Amanhã';
-
-  // If month or year differ from current, show full date with abbreviated month
-  if (target.month != today.month || target.year != today.year) {
-    const monthsPt = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Out',
-      'Nov',
-      'Dez',
-    ];
-    final mon = monthsPt[target.month - 1];
-    return '${target.day} $mon, ${target.year}';
-  }
-
-  const weekdaysPt = [
-    'Segunda',
-    'Terça',
-    'Quarta',
-    'Quinta',
-    'Sexta',
-    'Sábado',
-    'Domingo',
-  ];
-  final wd = weekdaysPt[(d.weekday - 1) % 7];
-  return '$wd ${d.day}';
-}
 
 /// ActivityPage + NewActivityPage
 /// UI updated to follow the provided mock; logic preserved.
@@ -122,13 +84,15 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     if (created == true) await _loadActivities();
   }
 
+  // ignore: unused_element
   Future<void> _migrateColors() async {
+    final loc = AppLocalizations.of(context)!;
     final user = ref.read(userProvider);
     final email = user?.email;
     if (email == null) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Iniciando migração de cores...')),
+      SnackBar(content: Text(loc.activityMigrationStart)),
     );
 
     int updated = 0;
@@ -156,7 +120,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
 
     await _loadActivities();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Migração completa: $updated itens atualizados')),
+      SnackBar(content: Text(loc.activityMigrationDone(updated))),
     );
   }
 
@@ -173,6 +137,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     final user = ref.read(userProvider);
     final email = user?.email;
     if (email == null) return;
+    final loc = AppLocalizations.of(context)!;
     final id = activity['id']?.toString();
     if (id == null) return;
     final currently = _isDone(activity);
@@ -195,12 +160,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            !currently
-                ? 'Atividade marcada como concluída'
-                : 'Atividade marcada como pendente',
+            !currently ? loc.activityMarkedDone : loc.activityMarkedPending,
           ),
           action: SnackBarAction(
-            label: 'Desfazer',
+            label: loc.commonUndo,
             onPressed: () async {
               // restore previous state
               await FirebaseDataService.updateUserActivity(
@@ -216,10 +179,30 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     }
   }
 
+  String _sectionHeader(
+    DateTime d,
+    BuildContext context,
+    AppLocalizations loc,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(d.year, d.month, d.day);
+    if (target == today) return loc.activitySectionToday;
+    if (target == today.add(const Duration(days: 1))) {
+      return loc.activitySectionTomorrow;
+    }
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    if (target.year != today.year || target.month != today.month) {
+      return DateFormat.yMMMEd(localeTag).format(target);
+    }
+    return DateFormat.MMMMd(localeTag).format(target);
+  }
+
   Future<void> _deleteActivity(Map<String, dynamic> activity) async {
     final user = ref.read(userProvider);
     final email = user?.email;
     if (email == null) return;
+    final loc = AppLocalizations.of(context)!;
     final id = activity['id']?.toString();
     if (id == null) return;
 
@@ -230,19 +213,19 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         backgroundColor: Theme.of(ctx).brightness == Brightness.dark
             ? Theme.of(ctx).cardColor
             : cs.surface,
-        title: Text('Confirmar', style: TextStyle(color: cs.onSurface)),
+        title: Text(loc.activityDeleteTitle, style: TextStyle(color: cs.onSurface)),
         content: Text(
-          'Deseja excluir esta atividade?',
+          loc.activityDeleteMessage,
           style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('Cancelar', style: TextStyle(color: cs.onSurface)),
+            child: Text(loc.commonCancel, style: TextStyle(color: cs.onSurface)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Excluir', style: TextStyle(color: cs.primary)),
+            child: Text(loc.commonDelete, style: TextStyle(color: cs.primary)),
           ),
         ],
       ),
@@ -260,9 +243,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       await _loadActivities();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Atividade excluída'),
+          content: Text(loc.activityDeleted),
           action: SnackBarAction(
-            label: 'Desfazer',
+            label: loc.commonUndo,
             onPressed: () async {
               // recreate the activity if user undoes
               final recreated = await FirebaseDataService.saveUserActivity(
@@ -276,7 +259,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao excluir atividade')),
+        SnackBar(content: Text(loc.activityDeleteError)),
       );
     }
   }
@@ -299,6 +282,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final loc = AppLocalizations.of(context)!;
     final surface = theme.brightness == Brightness.dark
         ? theme.cardColor
         : cs.surface;
@@ -352,7 +336,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Pendentes',
+                                  loc.activityFilterPending,
                                   style: GoogleFonts.poppins(
                                     color: _showCompleted
                                         ? cs.onSurface
@@ -378,7 +362,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                               ),
                               child: Center(
                                 child: Text(
-                                  'Concluídas',
+                                  loc.activityFilterCompleted,
                                   style: GoogleFonts.poppins(
                                     color: _showCompleted
                                         ? cs.onPrimary
@@ -408,7 +392,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Nenhuma atividade encontrada',
+                                  loc.activityEmptyTitle,
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     color: cs.onSurface.withOpacity(0.7),
@@ -422,7 +406,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                     color: cs.onSurface,
                                   ),
                                   label: Text(
-                                    'Recarregar',
+                                    loc.commonReload,
                                     style: TextStyle(color: cs.onSurface),
                                   ),
                                 ),
@@ -460,7 +444,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                         top: 8,
                                       ),
                                       child: Text(
-                                        _sectionHeader(date),
+                                        _sectionHeader(date, context, loc),
                                         style: GoogleFonts.poppins(
                                           fontWeight: FontWeight.w600,
                                           color: cs.onSurface,
@@ -498,7 +482,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         onPressed: _openNewActivity,
         icon: const Icon(Icons.add),
         label: Text(
-          'Nova atividade',
+          loc.activityNewButton,
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         backgroundColor: cs.primary,
@@ -538,8 +522,12 @@ class ActivityCardStyled extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final title = activity['title'] ?? 'Sem título';
-    final desc = activity['description'] ?? '';
+    final loc = AppLocalizations.of(context)!;
+    final rawTitle = activity['title']?.toString().trim();
+    final title = (rawTitle?.isNotEmpty ?? false)
+        ? rawTitle!
+        : loc.activityUntitled;
+    final desc = activity['description']?.toString() ?? '';
     final accent = _accentColor(activity);
     final surface = theme.brightness == Brightness.dark
         ? cs.primaryBackground
@@ -608,9 +596,14 @@ class ActivityCardStyled extends StatelessWidget {
                       );
 
                       if (s != null && e != null) {
-                        return Text('${fmt(s)}h - ${fmt(e)}h', style: tss);
+                        return Text(
+                          loc.activityTimeRange('${fmt(s)}h', '${fmt(e)}h'),
+                          style: tss,
+                        );
                       }
-                      if (e != null) return Text('${fmt(e)}h', style: tss);
+                      if (e != null) {
+                        return Text('${fmt(e)}h', style: tss);
+                      }
                       return const SizedBox.shrink();
                     },
                   ),
@@ -667,12 +660,14 @@ class ActivityCardStyled extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 1, child: Text('Editar')),
-                const PopupMenuItem(value: 2, child: Text('Excluir')),
+                PopupMenuItem(value: 1, child: Text(loc.activityMenuEdit)),
+                PopupMenuItem(value: 2, child: Text(loc.activityMenuDelete)),
                 PopupMenuItem(
                   value: 3,
                   child: Text(
-                    done ? 'Desmarcar como concluída' : 'Marcar como concluída',
+                    done
+                        ? loc.activityMenuUnmarkComplete
+                        : loc.activityMenuMarkComplete,
                   ),
                 ),
               ],
@@ -717,6 +712,8 @@ class _NewActivityPageState extends State<NewActivityPage> {
     0xFF8E24AA, // Purple
   ];
   int _selectedColor = 0xFFE53935;
+
+  AppLocalizations get loc => AppLocalizations.of(context)!;
 
   bool get _canSave {
     final title = _titleController.text.trim();
@@ -858,7 +855,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Nome é obrigatório')));
+      ).showSnackBar(
+        SnackBar(content: Text(loc.activityNameRequired)),
+      );
       return;
     }
 
@@ -890,7 +889,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
     if (!ok) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Erro ao criar atividade')));
+      ).showSnackBar(
+        SnackBar(content: Text(loc.activityCreateError)),
+      );
     }
   }
 
@@ -906,7 +907,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          _editingId != null ? 'Editar tarefa' : 'Criar tarefa',
+          _editingId != null
+              ? loc.activityDialogTitleEdit
+              : loc.activityDialogTitleCreate,
           style: GoogleFonts.poppins(
             color: cs.onSurface,
             fontWeight: FontWeight.w600,
@@ -928,7 +931,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                   controller: _titleController,
                   style: GoogleFonts.poppins(color: cs.onSurface),
                   decoration: InputDecoration.collapsed(
-                    hintText: 'Nome',
+                    hintText: loc.activityNameHint,
                     hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.6)),
                   ),
                 ),
@@ -942,7 +945,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                     Expanded(
                       child: _pill(
                         icon: Icons.play_arrow,
-                        label: 'Início',
+                        label: loc.activityStartLabel,
                         value: _format(_start),
                         onTap: () => _pickDateTime(
                           _start,
@@ -954,7 +957,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                     Expanded(
                       child: _pill(
                         icon: Icons.stop,
-                        label: 'Término',
+                        label: loc.activityEndLabel,
                         value: _format(_end),
                         onTap: () => _pickDateTime(
                           _end,
@@ -967,7 +970,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
               else
                 _pill(
                   icon: Icons.calendar_today,
-                  label: 'Prazo',
+                  label: loc.activityDeadlineLabel,
                   value: _format(_end),
                   onTap: () =>
                       _pickDateTime(_end, (d) => setState(() => _end = d)),
@@ -994,23 +997,23 @@ class _NewActivityPageState extends State<NewActivityPage> {
                     DropdownMenuItem(
                       value: 'atividade',
                       child: Text(
-                        'Atividade',
+                        loc.activityCategoryAssignment,
                         style: TextStyle(color: cs.primaryText),
                       ),
                     ),
                     DropdownMenuItem(
                       value: 'prova',
                       child: Text(
-                        'Prova',
+                        loc.activityCategoryExam,
                         style: TextStyle(color: cs.onSurface),
                       ),
                     ),
                   ],
                   onChanged: (v) =>
                       setState(() => _category = v ?? 'atividade'),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'Categoria',
+                    hintText: loc.activityCategoryLabel,
                   ),
                 ),
               ),
@@ -1022,7 +1025,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                   style: GoogleFonts.poppins(color: cs.onSurface),
                   maxLines: 5,
                   decoration: InputDecoration.collapsed(
-                    hintText: 'Detalhes...',
+                    hintText: loc.activityDetailsHint,
                     hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.6)),
                   ),
                 ),
@@ -1074,7 +1077,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
                     ),
                   ),
                   child: Text(
-                    _editingId != null ? 'Salvar' : 'Criar',
+                    _editingId != null
+                        ? loc.activitySaveButton
+                        : loc.activityCreateButton,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

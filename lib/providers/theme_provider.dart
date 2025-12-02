@@ -181,6 +181,43 @@ class ThemeProvider extends StateNotifier<ThemeData> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('primaryColor', color.value);
   }
+
+  /// Re-syncs the theme from the server whenever a user logs in.
+  Future<void> refreshForUser(User? user) async {
+    final email = user?.email;
+    if (email == null) return;
+
+    try {
+      final safeEmail = email.replaceAll('.', '_');
+      final snapshot = await FirebaseDatabase.instance
+          .ref()
+          .child('users')
+          .child(safeEmail)
+          .child('settings')
+          .child('isDarkMode')
+          .get();
+
+      if (!snapshot.exists || snapshot.value == null) return;
+
+      bool? isDark;
+      final value = snapshot.value;
+      if (value is bool) {
+        isDark = value;
+      } else if (value is String) {
+        isDark = value.toLowerCase() == 'true';
+      } else if (value is num) {
+        isDark = value != 0;
+      }
+
+      if (isDark != null) {
+        setTheme(isDark);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro ao sincronizar tema do usuário: $e');
+      }
+    }
+  }
 }
 
 final themeProvider = StateNotifierProvider<ThemeProvider, ThemeData>((ref) {
