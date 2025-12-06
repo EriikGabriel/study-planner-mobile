@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:html' as html show Blob, Url, window if (dart.library.html) '';
+
+// Web-only APIs from dart:html must not be imported on mobile. We avoid using
+// dart:html directly and handle web via share_plus with in-memory files.
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
@@ -74,8 +77,7 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
                 final s = widget.subjects[idx];
                 final rawTitle =
                     s['nome']?.toString() ?? s['atividade']?.toString() ?? '';
-                final title =
-                    rawTitle.isNotEmpty ? rawTitle : loc.roomsNoName;
+                final title = rawTitle.isNotEmpty ? rawTitle : loc.roomsNoName;
                 final group = s['turma']?.toString() ?? '-';
                 final year = s['ano']?.toString() ?? '-';
                 final term = s['periodo']?.toString() ?? '-';
@@ -176,12 +178,13 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
     final turma = widget.subject['turma']?.toString() ?? '';
     final ano = widget.subject['ano']?.toString() ?? '';
     final periodo = widget.subject['periodo']?.toString() ?? '';
-    
+
     // Normaliza o nome removendo espaços e caracteres especiais
-    final nomeNormalizado = nome
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
-    
+    final nomeNormalizado = nome.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]'),
+      '',
+    );
+
     // Cria um ID único: nome_turma_ano_periodo
     return '${nomeNormalizado}_${turma}_${ano}_${periodo}';
   }
@@ -232,27 +235,34 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
             final loc = AppLocalizations.of(ctx2)!;
 
             void showUploadError(String message) {
-              ScaffoldMessenger.of(ctx2).showSnackBar(
-                SnackBar(content: Text(message)),
-              );
+              ScaffoldMessenger.of(
+                ctx2,
+              ).showSnackBar(SnackBar(content: Text(message)));
             }
 
             Future<void> pickFile() async {
               try {
                 final res = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
-                  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'],
+                  allowedExtensions: [
+                    'pdf',
+                    'jpg',
+                    'jpeg',
+                    'png',
+                    'gif',
+                    'webp',
+                  ],
                   withData: true,
                   withReadStream: true,
                 );
                 if (res == null || res.files.isEmpty) return;
-                
+
                 final file = res.files.first;
                 final path = kIsWeb ? null : file.path;
-                
+
                 // Try to get bytes immediately if available
                 Uint8List? data = file.bytes;
-                
+
                 // If bytes are not available and we have a path (mobile/desktop), try reading
                 if (data == null && path != null) {
                   try {
@@ -277,7 +287,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
             Future<Uint8List?> resolvePickedBytes() async {
               // 1. Return if already available
               if (pickedData != null) return pickedData;
-              
+
               try {
                 // 2. Try getting bytes directly from file object
                 if (pickedFile?.bytes != null) {
@@ -289,13 +299,13 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                 if (pickedFile?.readStream != null) {
                   final stream = pickedFile!.readStream!;
                   final builder = BytesBuilder();
-                  
+
                   // Wrap stream reading in a future to allow timeout if needed externally
                   // or just rely on the stream completing.
                   await for (final chunk in stream) {
                     builder.add(chunk);
                   }
-                  
+
                   pickedData = builder.takeBytes();
                   return pickedData;
                 }
@@ -311,7 +321,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
               } catch (e) {
                 debugPrint('Error resolving file bytes: $e');
               }
-              
+
               return null;
             }
 
@@ -403,7 +413,8 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                     final title = titleCtrl.text.trim();
                                     final body = bodyCtrl.text.trim();
                                     final hasAttachment =
-                                        pickedData != null || pickedFile != null;
+                                        pickedData != null ||
+                                        pickedFile != null;
                                     if (title.isEmpty &&
                                         body.isEmpty &&
                                         !hasAttachment) {
@@ -417,11 +428,15 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
                                     bool success = false;
                                     try {
-                                      if (kDebugMode) debugPrint('🚀 Iniciando envio de post...');
-                                      
+                                      if (kDebugMode)
+                                        debugPrint(
+                                          '🚀 Iniciando envio de post...',
+                                        );
+
                                       final roomId = _getRoomId();
                                       if (roomId.isEmpty) {
-                                        if (kDebugMode) debugPrint('❌ Room ID vazio');
+                                        if (kDebugMode)
+                                          debugPrint('❌ Room ID vazio');
                                         showUploadError(loc.somethingWrong);
                                         return;
                                       }
@@ -429,48 +444,73 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                       String? attachmentUrl;
                                       String? attachmentName;
 
-                                      if (pickedFile != null || pickedData != null) {
-                                        if (kDebugMode) debugPrint('📎 Processando anexo...');
-                                        
-                                        final estimatedSize = pickedFile?.size ??
+                                      if (pickedFile != null ||
+                                          pickedData != null) {
+                                        if (kDebugMode)
+                                          debugPrint('📎 Processando anexo...');
+
+                                        final estimatedSize =
+                                            pickedFile?.size ??
                                             pickedData?.lengthInBytes;
                                         if (estimatedSize != null &&
                                             estimatedSize > maxFileBytes) {
-                                          if (kDebugMode) debugPrint('❌ Arquivo muito grande: $estimatedSize bytes');
+                                          if (kDebugMode)
+                                            debugPrint(
+                                              '❌ Arquivo muito grande: $estimatedSize bytes',
+                                            );
                                           showUploadError(
                                             loc.roomsAttachmentTooLarge(10),
                                           );
                                           return;
                                         }
 
-                                        if (kDebugMode) debugPrint('📖 Lendo bytes do arquivo...');
-                                        final data = await resolvePickedBytes().timeout(
-                                          const Duration(seconds: 30),
-                                          onTimeout: () {
-                                            if (kDebugMode) debugPrint('⏱️ Timeout ao ler arquivo');
-                                            return null;
-                                          },
-                                        );
+                                        if (kDebugMode)
+                                          debugPrint(
+                                            '📖 Lendo bytes do arquivo...',
+                                          );
+                                        final data = await resolvePickedBytes()
+                                            .timeout(
+                                              const Duration(seconds: 30),
+                                              onTimeout: () {
+                                                if (kDebugMode)
+                                                  debugPrint(
+                                                    '⏱️ Timeout ao ler arquivo',
+                                                  );
+                                                return null;
+                                              },
+                                            );
 
                                         if (data == null) {
-                                          if (kDebugMode) debugPrint('❌ Falha ao ler bytes do arquivo');
+                                          if (kDebugMode)
+                                            debugPrint(
+                                              '❌ Falha ao ler bytes do arquivo',
+                                            );
                                           showUploadError(
                                             loc.roomsAttachmentReadError,
                                           );
                                           return;
                                         }
-                                        
-                                        if (kDebugMode) debugPrint('✅ Arquivo lido: ${data.lengthInBytes} bytes');
-                                        
+
+                                        if (kDebugMode)
+                                          debugPrint(
+                                            '✅ Arquivo lido: ${data.lengthInBytes} bytes',
+                                          );
+
                                         if (data.lengthInBytes > maxFileBytes) {
-                                          if (kDebugMode) debugPrint('❌ Arquivo muito grande após leitura');
+                                          if (kDebugMode)
+                                            debugPrint(
+                                              '❌ Arquivo muito grande após leitura',
+                                            );
                                           showUploadError(
                                             loc.roomsAttachmentTooLarge(10),
                                           );
                                           return;
                                         }
 
-                                        if (kDebugMode) debugPrint('📤 Enviando arquivo para Firebase...');
+                                        if (kDebugMode)
+                                          debugPrint(
+                                            '📤 Enviando arquivo para Firebase...',
+                                          );
                                         final url =
                                             await FirebaseDataService.uploadRoomAttachment(
                                               subjectId: roomId,
@@ -480,7 +520,10 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                               data: data,
                                               onProgress: (p) {
                                                 if (!ctx2.mounted) return;
-                                                if (kDebugMode) debugPrint('📊 Progresso UI: ${(p * 100).toStringAsFixed(1)}%');
+                                                if (kDebugMode)
+                                                  debugPrint(
+                                                    '📊 Progresso UI: ${(p * 100).toStringAsFixed(1)}%',
+                                                  );
                                                 setState2(() {
                                                   uploadProgress = p;
                                                 });
@@ -488,25 +531,37 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                             ).timeout(
                                               const Duration(minutes: 2),
                                               onTimeout: () {
-                                                if (kDebugMode) debugPrint('⏱️ Timeout no upload do Firebase');
+                                                if (kDebugMode)
+                                                  debugPrint(
+                                                    '⏱️ Timeout no upload do Firebase',
+                                                  );
                                                 return null;
                                               },
                                             );
                                         if (url == null) {
-                                          if (kDebugMode) debugPrint('❌ Upload retornou URL nula');
+                                          if (kDebugMode)
+                                            debugPrint(
+                                              '❌ Upload retornou URL nula',
+                                            );
                                           showUploadError(loc.somethingWrong);
                                           return;
                                         }
-                                        
-                                        if (kDebugMode) debugPrint('✅ Upload concluído: $url');
+
+                                        if (kDebugMode)
+                                          debugPrint(
+                                            '✅ Upload concluído: $url',
+                                          );
                                         attachmentUrl = url;
                                         attachmentName =
                                             pickedName ??
                                             loc.roomsAttachmentDefaultName;
                                       }
 
-                                      if (kDebugMode) debugPrint('💾 Salvando post no banco de dados...');
-                                      
+                                      if (kDebugMode)
+                                        debugPrint(
+                                          '💾 Salvando post no banco de dados...',
+                                        );
+
                                       final post = {
                                         'title': title,
                                         'body': body,
@@ -527,25 +582,32 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                             post: post,
                                           );
                                       if (!saved) {
-                                        if (kDebugMode) debugPrint('❌ Falha ao salvar post');
+                                        if (kDebugMode)
+                                          debugPrint('❌ Falha ao salvar post');
                                         showUploadError(loc.somethingWrong);
                                         return;
                                       }
-                                      
-                                      if (kDebugMode) debugPrint('✅ Post salvo com sucesso!');
+
+                                      if (kDebugMode)
+                                        debugPrint('✅ Post salvo com sucesso!');
                                       success = true;
-                                      
+
                                       if (ctx2.mounted) {
                                         Navigator.of(ctx2).pop(true);
                                       }
                                     } catch (e, stack) {
                                       if (kDebugMode) {
-                                        debugPrint('❌ Erro geral no upload: $e');
+                                        debugPrint(
+                                          '❌ Erro geral no upload: $e',
+                                        );
                                         debugPrint('Stack: $stack');
                                       }
                                       showUploadError(loc.somethingWrong);
                                     } finally {
-                                      if (kDebugMode) debugPrint('🏁 Finalizando (success=$success)...');
+                                      if (kDebugMode)
+                                        debugPrint(
+                                          '🏁 Finalizando (success=$success)...',
+                                        );
                                       if (ctx2.mounted && !success) {
                                         setState2(() {
                                           uploading = false;
@@ -621,8 +683,10 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
           backgroundColor: Theme.of(ctx).brightness == Brightness.dark
               ? Theme.of(ctx).cardColor
               : cs.surface,
-          title: Text(loc.roomsDeletePostTitle,
-              style: TextStyle(color: cs.onSurface)),
+          title: Text(
+            loc.roomsDeletePostTitle,
+            style: TextStyle(color: cs.onSurface),
+          ),
           content: Text(
             loc.roomsDeletePostMessage,
             style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
@@ -630,13 +694,17 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child:
-                  Text(loc.commonCancel, style: TextStyle(color: cs.onSurface)),
+              child: Text(
+                loc.commonCancel,
+                style: TextStyle(color: cs.onSurface),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child:
-                  Text(loc.roomsDeletePost, style: TextStyle(color: cs.primary)),
+              child: Text(
+                loc.roomsDeletePost,
+                style: TextStyle(color: cs.primary),
+              ),
             ),
           ],
         );
@@ -657,8 +725,11 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
     final extension = filename.toLowerCase().split('.').last;
     if (extension == 'pdf') {
       return Icons.picture_as_pdf;
-    } else if (extension == 'jpg' || extension == 'jpeg' || 
-               extension == 'png' || extension == 'gif' || extension == 'webp') {
+    } else if (extension == 'jpg' ||
+        extension == 'jpeg' ||
+        extension == 'png' ||
+        extension == 'gif' ||
+        extension == 'webp') {
       return Icons.image;
     }
     return Icons.attach_file;
@@ -745,8 +816,10 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final rawTitle = widget.subject['nome']?.toString() ??
-      widget.subject['atividade']?.toString() ?? '';
+    final rawTitle =
+        widget.subject['nome']?.toString() ??
+        widget.subject['atividade']?.toString() ??
+        '';
     final title = rawTitle.isNotEmpty ? rawTitle : loc.roomsNoName;
     final cs = Theme.of(context).colorScheme;
 
@@ -781,14 +854,16 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                 itemBuilder: (context, idx) {
                   final p = _posts[idx];
                   final postTitleRaw = p['title']?.toString().trim() ?? '';
-                  final postTitle =
-                      postTitleRaw.isNotEmpty ? postTitleRaw : loc.activityUntitled;
-                    final author =
+                  final postTitle = postTitleRaw.isNotEmpty
+                      ? postTitleRaw
+                      : loc.activityUntitled;
+                  final author =
                       p['authorName'] ?? p['authorEmail'] ?? loc.roomsAnonymous;
                   final postAuthorEmail = p['authorEmail']?.toString() ?? '';
                   final currentUserEmail = ref.read(userProvider)?.email ?? '';
-                  final isAuthor = postAuthorEmail.isNotEmpty && 
-                                   postAuthorEmail == currentUserEmail;
+                  final isAuthor =
+                      postAuthorEmail.isNotEmpty &&
+                      postAuthorEmail == currentUserEmail;
                   final created = DateTime.tryParse(
                     p['createdAt']?.toString() ?? '',
                   );
@@ -866,9 +941,10 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                         if (p['attachmentUrl'] != null)
                           GestureDetector(
                             onTap: () async {
-                              final attachmentId = p['attachmentUrl']?.toString();
+                              final attachmentId = p['attachmentUrl']
+                                  ?.toString();
                               if (attachmentId == null) return;
-                              
+
                               // Mostrar loading
                               showDialog(
                                 context: context,
@@ -877,31 +953,37 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                   child: CircularProgressIndicator(),
                                 ),
                               );
-                              
+
                               try {
                                 final roomId = _getRoomId();
-                                final bytes = await FirebaseDataService.downloadRoomAttachment(
-                                  subjectId: roomId,
-                                  attachmentId: attachmentId,
-                                );
-                                
+                                final bytes =
+                                    await FirebaseDataService.downloadRoomAttachment(
+                                      subjectId: roomId,
+                                      attachmentId: attachmentId,
+                                    );
+
                                 if (!mounted) return;
                                 Navigator.of(context).pop(); // Fechar loading
-                                
+
                                 if (bytes == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text(loc.somethingWrong)),
                                   );
                                   return;
                                 }
-                                
+
                                 // Detectar tipo de arquivo
-                                final filename = p['attachmentName']?.toString() ?? '';
-                                final extension = filename.toLowerCase().split('.').last;
+                                final filename =
+                                    p['attachmentName']?.toString() ?? '';
+                                final extension = filename
+                                    .toLowerCase()
+                                    .split('.')
+                                    .last;
                                 String mimeType;
                                 if (extension == 'pdf') {
                                   mimeType = 'application/pdf';
-                                } else if (extension == 'jpg' || extension == 'jpeg') {
+                                } else if (extension == 'jpg' ||
+                                    extension == 'jpeg') {
                                   mimeType = 'image/jpeg';
                                 } else if (extension == 'png') {
                                   mimeType = 'image/png';
@@ -912,47 +994,71 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                 } else {
                                   mimeType = 'application/octet-stream';
                                 }
-                                
-                                // Na web, criar blob URL e abrir
+
+                                // Na web, compartilhar o arquivo em memória para download/abertura
                                 if (kIsWeb) {
-                                  final blob = html.Blob([bytes], mimeType);
-                                  final url = html.Url.createObjectUrlFromBlob(blob);
-                                  html.window.open(url, '_blank');
-                                  // Revogar URL após um delay para garantir que abriu
-                                  Future.delayed(const Duration(seconds: 1), () {
-                                    html.Url.revokeObjectUrl(url);
-                                  });
+                                  try {
+                                    final xf = XFile.fromData(
+                                      bytes,
+                                      name: filename.isNotEmpty
+                                          ? filename
+                                          : 'arquivo',
+                                      mimeType: mimeType,
+                                    );
+                                    await Share.shareXFiles([xf]);
+                                  } catch (e) {
+                                    if (kDebugMode)
+                                      debugPrint(
+                                        'Erro ao compartilhar arquivo na web: $e',
+                                      );
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(loc.somethingWrong),
+                                      ),
+                                    );
+                                  }
                                 } else {
                                   // Mobile/Desktop: salvar arquivo temporariamente e abrir
                                   try {
                                     final dir = await getTemporaryDirectory();
                                     final file = File('${dir.path}/$filename');
                                     await file.writeAsBytes(bytes);
-                                    
-                                    final result = await OpenFilex.open(file.path);
-                                    
+
+                                    final result = await OpenFilex.open(
+                                      file.path,
+                                    );
+
                                     if (result.type != ResultType.done) {
                                       if (!mounted) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            result.message.isEmpty 
-                                              ? 'Não foi possível abrir o arquivo' 
-                                              : result.message
+                                            result.message.isEmpty
+                                                ? 'Não foi possível abrir o arquivo'
+                                                : result.message,
                                           ),
                                         ),
                                       );
                                     }
                                   } catch (e) {
-                                    if (kDebugMode) debugPrint('Erro ao salvar/abrir arquivo: $e');
+                                    if (kDebugMode)
+                                      debugPrint(
+                                        'Erro ao salvar/abrir arquivo: $e',
+                                      );
                                     if (!mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(loc.somethingWrong)),
+                                      SnackBar(
+                                        content: Text(loc.somethingWrong),
+                                      ),
                                     );
                                   }
                                 }
                               } catch (e) {
-                                if (kDebugMode) debugPrint('Erro ao abrir PDF: $e');
+                                if (kDebugMode)
+                                  debugPrint('Erro ao abrir PDF: $e');
                                 if (!mounted) return;
                                 Navigator.of(context).pop(); // Fechar loading
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -963,7 +1069,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _getFileIcon(p['attachmentName']?.toString() ?? ''),
+                                  _getFileIcon(
+                                    p['attachmentName']?.toString() ?? '',
+                                  ),
                                   color: cs.primary,
                                 ),
                                 const SizedBox(width: 8),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
+import 'package:study_planner/services/notifications_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 
 /// ActivityPage + NewActivityPage
@@ -91,9 +93,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     final email = user?.email;
     if (email == null) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(loc.activityMigrationStart)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(loc.activityMigrationStart)));
 
     int updated = 0;
     // Use a stable ordering: current _activities list sorted by end date
@@ -119,9 +121,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     }
 
     await _loadActivities();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(loc.activityMigrationDone(updated))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(loc.activityMigrationDone(updated))));
   }
 
   bool _isDone(Map<String, dynamic> item) {
@@ -163,9 +165,8 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
             !currently ? loc.activityMarkedDone : loc.activityMarkedPending,
           ),
           action: SnackBarAction(
-            label: loc.commonUndo,
+            label: 'Desfazer',
             onPressed: () async {
-              // restore previous state
               await FirebaseDataService.updateUserActivity(
                 email: email,
                 id: id,
@@ -179,11 +180,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     }
   }
 
-  String _sectionHeader(
-    DateTime d,
-    BuildContext context,
-    AppLocalizations loc,
-  ) {
+  String _sectionHeader(DateTime d, AppLocalizations loc) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final target = DateTime(d.year, d.month, d.day);
@@ -213,7 +210,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         backgroundColor: Theme.of(ctx).brightness == Brightness.dark
             ? Theme.of(ctx).cardColor
             : cs.surface,
-        title: Text(loc.activityDeleteTitle, style: TextStyle(color: cs.onSurface)),
+        title: Text(
+          loc.activityDeleteTitle,
+          style: TextStyle(color: cs.onSurface),
+        ),
         content: Text(
           loc.activityDeleteMessage,
           style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
@@ -221,7 +221,10 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(loc.commonCancel, style: TextStyle(color: cs.onSurface)),
+            child: Text(
+              loc.commonCancel,
+              style: TextStyle(color: cs.onSurface),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -258,9 +261,9 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.activityDeleteError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.activityDeleteError)));
     }
   }
 
@@ -444,7 +447,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                         top: 8,
                                       ),
                                       child: Text(
-                                        _sectionHeader(date, context, loc),
+                                        _sectionHeader(date, loc),
                                         style: GoogleFonts.poppins(
                                           fontWeight: FontWeight.w600,
                                           color: cs.onSurface,
@@ -726,6 +729,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
     return true;
   }
 
+  @override
   void initState() {
     super.initState();
     final existing = widget.existingActivity;
@@ -735,12 +739,14 @@ class _NewActivityPageState extends State<NewActivityPage> {
       _detailsController.text = existing['description']?.toString() ?? '';
       _category = existing['category']?.toString() ?? 'atividade';
       try {
-        if (existing['start'] != null)
+        if (existing['start'] != null) {
           _start = DateTime.parse(existing['start']).toLocal();
+        }
       } catch (_) {}
       try {
-        if (existing['end'] != null)
+        if (existing['end'] != null) {
           _end = DateTime.parse(existing['end']).toLocal();
+        }
       } catch (_) {}
       try {
         _selectedColor =
@@ -855,9 +861,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(
-        SnackBar(content: Text(loc.activityNameRequired)),
-      );
+      ).showSnackBar(SnackBar(content: Text(loc.activityNameRequired)));
       return;
     }
 
@@ -889,10 +893,51 @@ class _NewActivityPageState extends State<NewActivityPage> {
     if (!ok) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(
-        SnackBar(content: Text(loc.activityCreateError)),
-      );
+      ).showSnackBar(SnackBar(content: Text(loc.activityCreateError)));
     }
+
+    // Schedule a notification for the activity deadline (or start if exam)
+    try {
+      final deadlineOrStart = _category == 'prova' ? _start : _end;
+      // Use a stable id derived from time
+      final id = deadlineOrStart.millisecondsSinceEpoch.remainder(1000000);
+      // 1) Alerta 10 minutos antes
+      final preAlert = deadlineOrStart.subtract(const Duration(minutes: 10));
+      if (kDebugMode) {
+        print(
+          '[Activity] Scheduling notifications for "${_titleController.text.trim()}"',
+        );
+        print(
+          '[Activity] Pre-alert at: $preAlert  Deadline/start at: $deadlineOrStart  idSeed=$id',
+        );
+      }
+      if (!preAlert.isBefore(DateTime.now())) {
+        await NotificationsService.scheduleNotification(
+          id: id, // same seed ok
+          title: 'Faltam 10 minutos',
+          body: '${_titleController.text.trim()} em 10 minutos',
+          scheduledDate: preAlert,
+        );
+      }
+      // 2) No prazo
+      await NotificationsService.scheduleNotification(
+        id: id + 1,
+        title: 'Atividade chegando no prazo',
+        body: '${_titleController.text.trim()} - prazo atingido',
+        scheduledDate: deadlineOrStart.add(
+          const Duration(minutes: 1),
+        ), // avoid immediate firing
+      );
+      // Debug: list pending scheduled notifications
+      await NotificationsService.debugPrintPendingSchedules();
+      // Show a quick confirmation notification now so the user sees something immediately
+      await NotificationsService.showImmediateNotification(
+        id: id + 100, // separate id to avoid collision
+        title: 'Notificação agendada',
+        body:
+            'Vamos te lembrar no horário definido: ${_format(deadlineOrStart)}',
+      );
+    } catch (_) {}
   }
 
   @override
@@ -902,6 +947,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
 
     return Scaffold(
       backgroundColor: cs.primaryBackground,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: cs.primaryBackground,
         elevation: 0,
@@ -926,169 +972,196 @@ class _NewActivityPageState extends State<NewActivityPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _fieldCard(
-                child: TextField(
-                  controller: _titleController,
-                  style: GoogleFonts.poppins(color: cs.onSurface),
-                  decoration: InputDecoration.collapsed(
-                    hintText: loc.activityNameHint,
-                    hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // Date controls: if 'prova' show start + end; otherwise only end (prazo)
-              if (_category == 'prova')
-                Row(
-                  children: [
-                    Expanded(
-                      child: _pill(
-                        icon: Icons.play_arrow,
-                        label: loc.activityStartLabel,
-                        value: _format(_start),
-                        onTap: () => _pickDateTime(
-                          _start,
-                          (d) => setState(() => _start = d),
+              // Make content scrollable to avoid overflow in landscape
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _fieldCard(
+                        child: TextField(
+                          controller: _titleController,
+                          style: GoogleFonts.poppins(color: cs.onSurface),
+                          decoration: InputDecoration.collapsed(
+                            hintText: loc.activityNameHint,
+                            hintStyle: TextStyle(
+                              color: cs.onSurface.withOpacity(0.6),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _pill(
-                        icon: Icons.stop,
-                        label: loc.activityEndLabel,
-                        value: _format(_end),
-                        onTap: () => _pickDateTime(
-                          _end,
-                          (d) => setState(() => _end = d),
+                      const SizedBox(height: 14),
+
+                      // Date controls: if 'prova' show start + end; otherwise only end (prazo)
+                      if (_category == 'prova')
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _pill(
+                                icon: Icons.play_arrow,
+                                label: loc.activityStartLabel,
+                                value: _format(_start),
+                                onTap: () => _pickDateTime(
+                                  _start,
+                                  (d) => setState(() => _start = d),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _pill(
+                                icon: Icons.stop,
+                                label: loc.activityEndLabel,
+                                value: _format(_end),
+                                onTap: () => _pickDateTime(
+                                  _end,
+                                  (d) => setState(() => _end = d),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        _pill(
+                          icon: Icons.calendar_today,
+                          label: loc.activityDeadlineLabel,
+                          value: _format(_end),
+                          onTap: () => _pickDateTime(
+                            _end,
+                            (d) => setState(() => _end = d),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                _pill(
-                  icon: Icons.calendar_today,
-                  label: loc.activityDeadlineLabel,
-                  value: _format(_end),
-                  onTap: () =>
-                      _pickDateTime(_end, (d) => setState(() => _end = d)),
-                ),
-              const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-              // Category
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.shadowColor.withOpacity(0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _category,
-                  items: [
-                    DropdownMenuItem(
-                      value: 'atividade',
-                      child: Text(
-                        loc.activityCategoryAssignment,
-                        style: TextStyle(color: cs.primaryText),
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'prova',
-                      child: Text(
-                        loc.activityCategoryExam,
-                        style: TextStyle(color: cs.onSurface),
-                      ),
-                    ),
-                  ],
-                  onChanged: (v) =>
-                      setState(() => _category = v ?? 'atividade'),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: loc.activityCategoryLabel,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              _fieldCard(
-                child: TextField(
-                  controller: _detailsController,
-                  style: GoogleFonts.poppins(color: cs.onSurface),
-                  maxLines: 5,
-                  decoration: InputDecoration.collapsed(
-                    hintText: loc.activityDetailsHint,
-                    hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.6)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Palette
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _colors.map((c) {
-                    final selected = _selectedColor == c;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedColor = c),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        width: 44,
-                        height: 44,
+                      // Category
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Color(c),
-                          shape: BoxShape.circle,
+                          color: cs.surface,
+                          borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.06),
-                              blurRadius: 6,
+                              color: theme.shadowColor.withOpacity(0.03),
+                              blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          border: selected
-                              ? Border.all(color: theme.dividerColor, width: 2)
-                              : null,
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: _category,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'atividade',
+                              child: Text(
+                                loc.activityCategoryAssignment,
+                                style: TextStyle(color: cs.primaryText),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'prova',
+                              child: Text(
+                                loc.activityCategoryExam,
+                                style: TextStyle(color: cs.onSurface),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) =>
+                              setState(() => _category = v ?? 'atividade'),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: loc.activityCategoryLabel,
+                          ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: 18),
+                      const SizedBox(height: 12),
 
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _canSave ? _save : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    _editingId != null
-                        ? loc.activitySaveButton
-                        : loc.activityCreateButton,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onPrimary,
-                    ),
+                      _fieldCard(
+                        child: TextField(
+                          controller: _detailsController,
+                          style: GoogleFonts.poppins(color: cs.onSurface),
+                          maxLines: 5,
+                          decoration: InputDecoration.collapsed(
+                            hintText: loc.activityDetailsHint,
+                            hintStyle: TextStyle(
+                              color: cs.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Palette
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _colors.map((c) {
+                            final selected = _selectedColor == c;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedColor = c),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Color(c),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.shadowColor.withOpacity(
+                                        0.06,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                  border: selected
+                                      ? Border.all(
+                                          color: theme.dividerColor,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                    ],
                   ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _canSave ? _save : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cs.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                _editingId != null
+                    ? loc.activitySaveButton
+                    : loc.activityCreateButton,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onPrimary,
+                ),
+              ),
+            ),
           ),
         ),
       ),

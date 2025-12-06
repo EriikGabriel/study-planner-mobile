@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:study_planner/l10n/app_localizations.dart';
 import 'package:study_planner/providers/user_provider.dart';
 import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/notifications_service.dart';
@@ -209,9 +209,9 @@ class _AgendaPageState extends State<AgendaPage> {
 
   String _getMonthName(BuildContext context) {
     final locale = Localizations.localeOf(context);
-    final formatted = DateFormat.MMMM(locale.toLanguageTag()).format(
-      _currentMonth,
-    );
+    final formatted = DateFormat.MMMM(
+      locale.toLanguageTag(),
+    ).format(_currentMonth);
     final sentenceCase = toBeginningOfSentenceCase(formatted);
     return sentenceCase;
   }
@@ -268,7 +268,6 @@ class _AgendaPageState extends State<AgendaPage> {
         children: [
           // Navegação do mês
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 icon: Icon(
@@ -278,15 +277,22 @@ class _AgendaPageState extends State<AgendaPage> {
                 ),
                 onPressed: _previousMonth,
               ),
-              Text(
-                "${_getMonthName(ctx)} ${_currentMonth.year}",
-                style: GoogleFonts.poppins(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: theme.primaryText,
+              Expanded(
+                child: Text(
+                  "${_getMonthName(ctx)} ${_currentMonth.year}",
+                  style: GoogleFonts.poppins(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
                 ),
               ),
-              Row(
+              Wrap(
+                spacing: 0,
                 children: [
                   IconButton(
                     icon: Icon(
@@ -379,12 +385,12 @@ class _AgendaPageState extends State<AgendaPage> {
             children: [
               Expanded(
                 child: Text(
-                    _selectedDay == null
+                  _selectedDay == null
                       ? loc.agendaDefaultSectionTitle
-                      : _getDayDisplayName(_selectedDay!, loc).replaceAll(
-                        "📅 ",
-                        '',
-                      ),
+                      : _getDayDisplayName(
+                          _selectedDay!,
+                          loc,
+                        ).replaceAll("📅 ", ''),
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -458,10 +464,7 @@ class _AgendaPageState extends State<AgendaPage> {
     );
   }
 
-  Widget _buildGroupedSubjectsList(
-    ColorScheme theme,
-    AppLocalizations loc,
-  ) {
+  Widget _buildGroupedSubjectsList(ColorScheme theme, AppLocalizations loc) {
     // Agrupa matérias por dia da semana
     final Map<String, List<Map<String, dynamic>>> groupedByDay = {};
 
@@ -1082,7 +1085,7 @@ class _TaskCardState extends State<TaskCard>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                                presenceLabel,
+                                              presenceLabel,
                                               style: GoogleFonts.poppins(
                                                 fontWeight: FontWeight.w700,
                                                 color: cs.onSurface,
@@ -1090,7 +1093,7 @@ class _TaskCardState extends State<TaskCard>
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                                attendedLabel,
+                                              attendedLabel,
                                               style: GoogleFonts.poppins(
                                                 color: cs.onSurface.withOpacity(
                                                   0.9,
@@ -1098,7 +1101,7 @@ class _TaskCardState extends State<TaskCard>
                                               ),
                                             ),
                                             Text(
-                                                missedLabel,
+                                              missedLabel,
                                               style: GoogleFonts.poppins(
                                                 color: cs.onSurface.withOpacity(
                                                   0.9,

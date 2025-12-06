@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationsService {
   static final FlutterLocalNotificationsPlugin _plugin =
@@ -29,8 +30,81 @@ class NotificationsService {
       const InitializationSettings(android: android, iOS: ios),
       // onDidReceiveNotificationResponse can be added if needed
     );
+    if (kDebugMode) {
+      print('[Notifications] Initialized plugin');
+    }
+
+    // Android 13+ runtime notification permission
+    try {
+      final androidImpl = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      final granted = await androidImpl?.requestNotificationsPermission();
+      if (kDebugMode) {
+        print('[Notifications] Android permission request result: $granted');
+      }
+      // Also log current notifications enabled status if available
+      try {
+        final enabled = await androidImpl?.areNotificationsEnabled();
+        if (kDebugMode) {
+          print('[Notifications] Android notifications enabled: $enabled');
+        }
+      } catch (_) {}
+    } catch (_) {}
+
+    // Create default notification channel on Android
+    try {
+      final androidImpl = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      const channel = AndroidNotificationChannel(
+        'default',
+        'Notificações',
+        description: 'Canal padrão',
+        importance: Importance.max,
+      );
+      await androidImpl?.createNotificationChannel(channel);
+      if (kDebugMode) {
+        print('[Notifications] Android channel created: ${channel.id}');
+      }
+    } catch (_) {}
+
+    // Initialize timezone database and set local location
+    try {
+      tz.initializeTimeZones();
+      // Force Brazil timezone to avoid devices reporting UTC; app is Brazil-only
+      tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
+      if (kDebugMode) {
+        final now = DateTime.now();
+        final tzNow = tz.TZDateTime.from(now, tz.local);
+        print(
+          '[Notifications] Timezone initialized (forced). tz.local: ${tz.local.name} now: $tzNow',
+        );
+      }
+    } catch (_) {}
 
     _initialized = true;
+  }
+
+  /// Debug helper: print pending scheduled notifications (app-side) if supported.
+  static Future<void> debugPrintPendingSchedules() async {
+    try {
+      final pending = await _plugin.pendingNotificationRequests();
+      if (kDebugMode) {
+        print('[Notifications] Pending count: ${pending.length}');
+        for (final p in pending) {
+          print(
+            '[Notifications] Pending -> id=${p.id} title="${p.title}" body="${p.body}" payload=${p.payload}',
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[Notifications] Error reading pending notifications: $e');
+      }
+    }
   }
 
   static Future<void> showImmediateNotification({
@@ -44,6 +118,9 @@ class NotificationsService {
       'Notificações',
       channelDescription: 'Canal padrão',
       importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
     );
     const ios = DarwinNotificationDetails();
     await _plugin.show(
@@ -60,11 +137,65 @@ class NotificationsService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    // Scheduling via zonedSchedule requires timezone setup (package:timezone).
-    // For now we provide a simple wrapper that shows an immediate notification
-    // (or could be extended to schedule with tz).
     if (kIsWeb) return;
-    await showImmediateNotification(id: id, title: title, body: body);
+    if (kDebugMode) {
+      final now = DateTime.now();
+      print(
+        '[Notifications] scheduleNotification check: scheduledDate=$scheduledDate vs now=$now',
+      );
+    }
+    if (scheduledDate.isBefore(DateTime.now())) {
+      if (kDebugMode) {
+        print(
+          '[Notifications] scheduledDate is in the past, showing immediate notification for id=$id',
+        );
+      }
+      await showImmediateNotification(id: id, title: title, body: body);
+      return;
+    }
+
+    var tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    // If local timezone resolves to UTC on this device, adjust by the device offset
+    // so the scheduled wall-clock matches what the user selected.
+    if (tz.local.name.toUpperCase() == 'UTC') {
+      final offset = DateTime.now().timeZoneOffset;
+      final adjustedWallClock = scheduledDate.subtract(offset);
+      tzDate = tz.TZDateTime.from(adjustedWallClock, tz.getLocation('UTC'));
+      if (kDebugMode) {
+        print(
+          '[Notifications] tz.local=UTC; applying offset $offset -> tzDate=$tzDate',
+        );
+      }
+    }
+    if (kDebugMode) {
+      print(
+        '[Notifications] Final schedule id=$id at $tzDate (tz=${tz.local.name}) title="$title"',
+      );
+    }
+    const android = AndroidNotificationDetails(
+      'default',
+      'Notificações',
+      channelDescription: 'Canal padrão',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
+    const ios = DarwinNotificationDetails();
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzDate,
+      const NotificationDetails(android: android, iOS: ios),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: null,
+      payload: null,
+    );
+    if (kDebugMode) {
+      print('[Notifications] zonedSchedule submitted for id=$id');
+    }
   }
 
   /// Schedule notifications for upcoming class times for a list of subjects.

@@ -18,7 +18,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-
   Widget _buildSettingItem(
     BuildContext context,
     ColorScheme colors, {
@@ -44,7 +43,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
     );
   }
-  Widget _buildAccountOptions(BuildContext context, ColorScheme colors, User? user) {
+
+  Widget _buildAccountOptions(
+    BuildContext context,
+    ColorScheme colors,
+    User? user,
+  ) {
     final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
@@ -53,9 +57,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.person_outline,
           title: loc.settingsEditProfile,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.settingsComingSoon))),
         ),
         const SizedBox(height: 8),
         _buildAttendanceSetting(context, colors, user),
@@ -65,9 +69,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.lock_outline,
           title: loc.settingsChangePassword,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.settingsComingSoon))),
         ),
         const SizedBox(height: 8),
         _buildSettingItem(
@@ -75,16 +79,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.notifications_outlined,
           title: loc.settingsNotifications,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.settingsComingSoon))),
         ),
       ],
     );
   }
 
-
-  Widget _buildAttendanceSetting(BuildContext context, ColorScheme colors, User? user) {
+  Widget _buildAttendanceSetting(
+    BuildContext context,
+    ColorScheme colors,
+    User? user,
+  ) {
     final loc = AppLocalizations.of(context)!;
     final email = user?.email;
     return FutureBuilder<bool>(
@@ -139,6 +146,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -155,9 +163,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             children: [
               _buildUserHeader(context, colors, user),
               const SizedBox(height: 32),
-              _buildSectionTitle(context, colors, loc.settingsAppearanceSection),
+              _buildSectionTitle(
+                context,
+                colors,
+                loc.settingsAppearanceSection,
+              ),
               const SizedBox(height: 12),
-              _buildThemeToggle(context, colors, (Theme.of(context).brightness == Brightness.dark), this.ref),
+              _buildThemeToggle(
+                context,
+                colors,
+                (Theme.of(context).brightness == Brightness.dark),
+                this.ref,
+              ),
               const SizedBox(height: 32),
               _buildSectionTitle(context, colors, loc.settingsAccountSection),
               const SizedBox(height: 12),
@@ -176,7 +193,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
     );
   }
-
 
   Widget _buildLanguageSetting(
     BuildContext context,
@@ -212,12 +228,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
         subtitle: Text(
           languages[currentLang] ?? 'Português',
-          style: GoogleFonts.poppins(
-            color: colors.secondaryText,
-            fontSize: 13,
-          ),
+          style: GoogleFonts.poppins(color: colors.secondaryText, fontSize: 13),
         ),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: colors.secondaryText),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: colors.secondaryText,
+        ),
         onTap: () async {
           final selected = await showDialog<String>(
             context: context,
@@ -234,7 +251,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     title: Text(
                       entry.value,
                       style: GoogleFonts.poppins(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                     trailing: isSelected
@@ -248,10 +267,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           );
 
           if (selected != null && selected != currentLang && context.mounted) {
-            await localeNotifier.changeLanguage(
-              selected,
-              user?.email,
-            );
+            await localeNotifier.changeLanguage(selected, user?.email);
 
             if (!context.mounted) return;
           }
@@ -379,9 +395,48 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.info_outline,
           title: loc.settingsAboutApp,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () async {
+            // Placeholder version; not fetching real version
+            const version = '1.0.0';
+            if (!context.mounted) return;
+            showDialog(
+              context: context,
+              builder: (ctx) {
+                return AlertDialog(
+                  title: Text(
+                    loc.settingsAboutApp,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aplicativo de planejamento de estudos para organizar matérias, horários e presença.',
+                        style: GoogleFonts.poppins(),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Versão: $version',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Desenvolvido por Erik Gabriel e Thiago Kraide',
+                        style: GoogleFonts.poppins(),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text('Fechar'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
         const SizedBox(height: 8),
         _buildSettingItem(
@@ -389,9 +444,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.privacy_tip_outlined,
           title: loc.settingsPrivacyPolicy,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.settingsComingSoon))),
         ),
         const SizedBox(height: 8),
         _buildSettingItem(
@@ -399,9 +454,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           colors,
           icon: Icons.description_outlined,
           title: loc.settingsTermsOfUse,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.settingsComingSoon)),
-          ),
+          onTap: () => ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(loc.settingsComingSoon))),
         ),
       ],
     );
