@@ -15,24 +15,19 @@ class ThemeProvider extends StateNotifier<ThemeData> {
     _loadPreferences();
   }
 
-  /// A future that completes when the provider finished loading preferences.
   Future<void> get initialized => _initCompleter.future;
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Load primary color
     final colorValue = prefs.getInt('primaryColor');
     if (colorValue != null) {
       final color = Color(colorValue);
       setPrimaryColor(color);
     }
 
-    // Load theme mode (dark / light) - prefer server (per-account) when available
     bool? isDark;
-    // First try to read local preference
     isDark = prefs.getBool('isDarkMode');
 
-    // If user logged in, try to read from realtime DB (per-account setting)
     final user = FirebaseAuth.instance.currentUser;
     if (user?.email != null) {
       try {
@@ -46,14 +41,12 @@ class ThemeProvider extends StateNotifier<ThemeData> {
             .get();
 
         if (snapshot.exists && snapshot.value != null) {
-          // Realtime Database returns booleans as dynamic, handle strings too
           final v = snapshot.value;
           if (v is bool) {
             isDark = v;
           } else if (v is String) {
             isDark = v.toLowerCase() == 'true';
           }
-          // persist locally the server value
           final prefs2 = await SharedPreferences.getInstance();
           await prefs2.setBool('isDarkMode', isDark ?? false);
         }
@@ -66,7 +59,6 @@ class ThemeProvider extends StateNotifier<ThemeData> {
       setTheme(isDark);
     }
 
-    // mark initialization complete
     if (!_initCompleter.isCompleted) {
       _initCompleter.complete();
     }
@@ -80,11 +72,9 @@ class ThemeProvider extends StateNotifier<ThemeData> {
           primary: state.primaryColor,
         ),
       );
-      // persist locally
       SharedPreferences.getInstance().then((prefs) async {
         await prefs.setBool('isDarkMode', false);
       });
-      // persist to DB if logged in
       final user = FirebaseAuth.instance.currentUser;
       if (user?.email != null) {
         final safeEmail = user!.email!.replaceAll('.', '_');
@@ -102,11 +92,9 @@ class ThemeProvider extends StateNotifier<ThemeData> {
           primary: state.primaryColor,
         ),
       );
-      // persist locally
       SharedPreferences.getInstance().then((prefs) async {
         await prefs.setBool('isDarkMode', true);
       });
-      // persist to DB if logged in
       final user = FirebaseAuth.instance.currentUser;
       if (user?.email != null) {
         final safeEmail = user!.email!.replaceAll('.', '_');
@@ -177,12 +165,10 @@ class ThemeProvider extends StateNotifier<ThemeData> {
         colorScheme: lightTheme.colorScheme.copyWith(primary: color),
       );
     }
-    // persist primary color
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('primaryColor', color.value);
   }
 
-  /// Re-syncs the theme from the server whenever a user logs in.
   Future<void> refreshForUser(User? user) async {
     final email = user?.email;
     if (email == null) return;

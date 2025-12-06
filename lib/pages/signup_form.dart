@@ -1,4 +1,3 @@
-// Signup form component used by LoginPage when switching to sign-up mode
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -76,7 +75,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validate all fields as mandatory
     if (username.isEmpty) {
       showErrorToast(
         context: context,
@@ -95,7 +93,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
       return;
     }
 
-    // Validate email format
     if (_validateEmail(email) != null) {
       showErrorToast(
         context: context,
@@ -114,7 +111,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
       return;
     }
 
-    // Validate password length
     if (_validatePassword(password) != null) {
       showErrorToast(
         context: context,
@@ -124,11 +120,9 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
       return;
     }
 
-    // Show loading state
     setState(() => _isLoading = true);
 
     try {
-      // First, try to create the user in Firebase
       try {
         final user = await AuthModel().sign(
           email: email,
@@ -159,7 +153,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
 
         if (!mounted) return;
 
-        // Call UFSCar API to login and fetch subjects
         final apiResponse = await UFSCarAPIService.loginAndFetchSubjects(
           email: email,
           password: password,
@@ -177,10 +170,8 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
           return;
         }
 
-        // Parse subjects from response
         final subjects = UFSCarAPIService.parseSubjects(apiResponse);
 
-        // Save user data to Firebase Realtime Database
         final dataSaved =
             await FirebaseDataService.saveUserProfileAndDisciplines(
               email: email,
@@ -200,7 +191,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
           return;
         }
 
-        // Show subjects in dialog
         if (mounted) {
           showDialog(
             context: context,
@@ -214,7 +204,6 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
           content: loc.userCreated,
         );
 
-        // Navigate to login after a short delay to allow dialog viewing
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
           Navigator.of(context).pushReplacementNamed('/login');
@@ -412,7 +401,7 @@ class _SignUpFormState extends ConsumerState<SignUpForm> {
                     ),
                   )
                 : Text(
-                  _loc.loginButtonSignup,
+                    _loc.loginButtonSignup,
                     style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                       color: Theme.of(context).colorScheme.primaryBackground,
                       fontWeight: FontWeight.w600,

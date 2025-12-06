@@ -10,7 +10,7 @@ class AuthModel {
     required String email,
     required LoginMode mode,
     required String password,
-    required WidgetRef ref, // Pegamos o ref para atualizar o estado
+    required WidgetRef ref,
   }) async {
     try {
       UserCredential result;
@@ -33,7 +33,7 @@ class AuthModel {
       print("User login: $user");
 
       if (user != null) {
-        ref.read(userProvider.notifier).setUser(user); // Atualiza o provider
+        ref.read(userProvider.notifier).setUser(user);
       }
       return user;
     } on FirebaseAuthException catch (e) {

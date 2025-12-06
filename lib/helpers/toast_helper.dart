@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 
-// Função para exibir um toast de sucesso
 void showSuccessToast({
   required BuildContext context,
   required String title,
@@ -44,7 +43,6 @@ void showSuccessToast({
   );
 }
 
-// Função para exibir um toast de erro
 void showErrorToast({
   BuildContext? context,
   required String title,
@@ -64,7 +62,7 @@ void showErrorToast({
     alignment: alignment,
     animationDuration: const Duration(milliseconds: 100),
     icon: const Icon(Icons.error),
-    showIcon: true, // exibe ou oculta o ícone
+    showIcon: true,
     primaryColor: Colors.red[900],
     backgroundColor: Colors.red,
     foregroundColor: Colors.white,
@@ -80,7 +78,6 @@ void showErrorToast({
       ),
     ],
     showProgressBar: true,
-    closeButtonShowType: CloseButtonShowType.onHover,
     closeOnClick: false,
     pauseOnHover: true,
     dragToClose: true,

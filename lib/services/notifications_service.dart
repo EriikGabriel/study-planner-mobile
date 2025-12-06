@@ -28,13 +28,12 @@ class NotificationsService {
 
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),
-      // onDidReceiveNotificationResponse can be added if needed
     );
     if (kDebugMode) {
       print('[Notifications] Initialized plugin');
     }
 
-    // Android 13+ runtime notification permission
+    // Solicita permissão de notificação no Android 13+
     try {
       final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<
@@ -44,7 +43,6 @@ class NotificationsService {
       if (kDebugMode) {
         print('[Notifications] Android permission request result: $granted');
       }
-      // Also log current notifications enabled status if available
       try {
         final enabled = await androidImpl?.areNotificationsEnabled();
         if (kDebugMode) {
@@ -53,7 +51,7 @@ class NotificationsService {
       } catch (_) {}
     } catch (_) {}
 
-    // Create default notification channel on Android
+    // Cria canal padrão de notificação no Android
     try {
       final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<
@@ -71,10 +69,9 @@ class NotificationsService {
       }
     } catch (_) {}
 
-    // Initialize timezone database and set local location
+    // Inicializa timezone forçando Brasil (app é exclusivo BR)
     try {
       tz.initializeTimeZones();
-      // Force Brazil timezone to avoid devices reporting UTC; app is Brazil-only
       tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
       if (kDebugMode) {
         final now = DateTime.now();
@@ -88,7 +85,6 @@ class NotificationsService {
     _initialized = true;
   }
 
-  /// Debug helper: print pending scheduled notifications (app-side) if supported.
   static Future<void> debugPrintPendingSchedules() async {
     try {
       final pending = await _plugin.pendingNotificationRequests();
@@ -156,8 +152,7 @@ class NotificationsService {
 
     var tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
-    // If local timezone resolves to UTC on this device, adjust by the device offset
-    // so the scheduled wall-clock matches what the user selected.
+    // Ajuste para dispositivos que reportam UTC ao invés do timezone local
     if (tz.local.name.toUpperCase() == 'UTC') {
       final offset = DateTime.now().timeZoneOffset;
       final adjustedWallClock = scheduledDate.subtract(offset);
@@ -198,9 +193,6 @@ class NotificationsService {
     }
   }
 
-  /// Schedule notifications for upcoming class times for a list of subjects.
-  /// For each horario, schedule a notification X minutes before the class start
-  /// and write a record into Realtime Database under users/<safeEmail>/notifications.
   static Future<void> scheduleClassNotificationsForSubjects(
     List<Map<String, dynamic>> subjects,
     String email, {
@@ -216,11 +208,9 @@ class NotificationsService {
         final horarios = subject['horarios'] as List<dynamic>? ?? [];
         for (final h in horarios) {
           final dia = h['dia']?.toString() ?? '';
-          final inicio =
-              h['inicio']?.toString() ?? ''; // expecting HH:mm:ss or HH:mm
+          final inicio = h['inicio']?.toString() ?? '';
           if (dia.isEmpty || inicio.isEmpty) continue;
 
-          // compute next occurrence of this weekday/time
           final next = _nextDateForDayAndTime(dia, inicio);
           if (next == null) continue;
 
@@ -232,16 +222,13 @@ class NotificationsService {
           final body =
               'Aula começa em $minutesBefore minutos. Presença automática ativada.';
 
-          // schedule local notification
           try {
             await showImmediateNotification(id: id, title: title, body: body);
-            // Note: using showImmediateNotification here to deliver immediate demo notifications;
-            // ideally we'd schedule at `scheduled` with zonedSchedule, but that requires tz setup.
           } catch (e) {
             if (kDebugMode) print('Erro ao agendar notificação local: $e');
           }
 
-          // write a notification record in DB with status scheduled
+          // Salva registro no banco de dados
           final notif = {
             'type': 'class',
             'subjectId': subjectId,
@@ -285,7 +272,7 @@ class NotificationsService {
 
       DateTime now = DateTime.now();
       DateTime candidate = DateTime(now.year, now.month, now.day, hour, minute);
-      // advance day until weekday matches and candidate is in future
+
       int attempts = 0;
       while ((candidate.weekday != targetWeekday || candidate.isBefore(now)) &&
           attempts < 14) {

@@ -1,8 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'dart:typed_data';
-
-// Web-only APIs from dart:html must not be imported on mobile. We avoid using
-// dart:html directly and handle web via share_plus with in-memory files.
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
@@ -18,7 +17,6 @@ import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 import 'package:study_planner/utils/file_reader.dart';
 
-/// Salas: lista de disciplinas do usuário e, ao entrar, exibe posts (resumos/perguntas)
 class RoomsPage extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> subjects;
   final VoidCallback onRefresh;
@@ -55,7 +53,7 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
                   Text(
                     loc.roomsEmptyTitle,
                     style: GoogleFonts.poppins(
-                      color: cs.onSurface.withOpacity(0.85),
+                      color: cs.onSurface.withValues(alpha: 0.85),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -91,13 +89,15 @@ class _RoomsPageState extends ConsumerState<RoomsPage> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: cs.surface,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? cs.secondaryBackground
+                          : cs.surface,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
                           color: Theme.of(
                             context,
-                          ).shadowColor.withOpacity(0.03),
+                          ).shadowColor.withValues(alpha: 0.03),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -171,22 +171,18 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
   AppLocalizations get loc => AppLocalizations.of(context)!;
 
-  /// Gera um ID único para a sala baseado na disciplina, turma, ano e período
-  /// Isso garante que todos os alunos da mesma turma compartilhem a mesma sala
   String _getRoomId() {
     final nome = widget.subject['nome']?.toString() ?? '';
     final turma = widget.subject['turma']?.toString() ?? '';
     final ano = widget.subject['ano']?.toString() ?? '';
     final periodo = widget.subject['periodo']?.toString() ?? '';
 
-    // Normaliza o nome removendo espaços e caracteres especiais
     final nomeNormalizado = nome.toLowerCase().replaceAll(
       RegExp(r'[^a-z0-9]'),
       '',
     );
 
-    // Cria um ID único: nome_turma_ano_periodo
-    return '${nomeNormalizado}_${turma}_${ano}_${periodo}';
+    return '${nomeNormalizado}_${turma}_${ano}_$periodo';
   }
 
   @override
@@ -428,15 +424,17 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
                                     bool success = false;
                                     try {
-                                      if (kDebugMode)
+                                      if (kDebugMode) {
                                         debugPrint(
                                           '🚀 Iniciando envio de post...',
                                         );
+                                      }
 
                                       final roomId = _getRoomId();
                                       if (roomId.isEmpty) {
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint('❌ Room ID vazio');
+                                        }
                                         showUploadError(loc.somethingWrong);
                                         return;
                                       }
@@ -446,71 +444,79 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
 
                                       if (pickedFile != null ||
                                           pickedData != null) {
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint('📎 Processando anexo...');
+                                        }
 
                                         final estimatedSize =
                                             pickedFile?.size ??
                                             pickedData?.lengthInBytes;
                                         if (estimatedSize != null &&
                                             estimatedSize > maxFileBytes) {
-                                          if (kDebugMode)
+                                          if (kDebugMode) {
                                             debugPrint(
                                               '❌ Arquivo muito grande: $estimatedSize bytes',
                                             );
+                                          }
                                           showUploadError(
                                             loc.roomsAttachmentTooLarge(10),
                                           );
                                           return;
                                         }
 
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint(
                                             '📖 Lendo bytes do arquivo...',
                                           );
+                                        }
                                         final data = await resolvePickedBytes()
                                             .timeout(
                                               const Duration(seconds: 30),
                                               onTimeout: () {
-                                                if (kDebugMode)
+                                                if (kDebugMode) {
                                                   debugPrint(
                                                     '⏱️ Timeout ao ler arquivo',
                                                   );
+                                                }
                                                 return null;
                                               },
                                             );
 
                                         if (data == null) {
-                                          if (kDebugMode)
+                                          if (kDebugMode) {
                                             debugPrint(
                                               '❌ Falha ao ler bytes do arquivo',
                                             );
+                                          }
                                           showUploadError(
                                             loc.roomsAttachmentReadError,
                                           );
                                           return;
                                         }
 
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint(
                                             '✅ Arquivo lido: ${data.lengthInBytes} bytes',
                                           );
+                                        }
 
                                         if (data.lengthInBytes > maxFileBytes) {
-                                          if (kDebugMode)
+                                          if (kDebugMode) {
                                             debugPrint(
                                               '❌ Arquivo muito grande após leitura',
                                             );
+                                          }
                                           showUploadError(
                                             loc.roomsAttachmentTooLarge(10),
                                           );
                                           return;
                                         }
 
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint(
                                             '📤 Enviando arquivo para Firebase...',
                                           );
+                                        }
                                         final url =
                                             await FirebaseDataService.uploadRoomAttachment(
                                               subjectId: roomId,
@@ -520,10 +526,11 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                               data: data,
                                               onProgress: (p) {
                                                 if (!ctx2.mounted) return;
-                                                if (kDebugMode)
+                                                if (kDebugMode) {
                                                   debugPrint(
                                                     '📊 Progresso UI: ${(p * 100).toStringAsFixed(1)}%',
                                                   );
+                                                }
                                                 setState2(() {
                                                   uploadProgress = p;
                                                 });
@@ -531,36 +538,40 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                             ).timeout(
                                               const Duration(minutes: 2),
                                               onTimeout: () {
-                                                if (kDebugMode)
+                                                if (kDebugMode) {
                                                   debugPrint(
                                                     '⏱️ Timeout no upload do Firebase',
                                                   );
+                                                }
                                                 return null;
                                               },
                                             );
                                         if (url == null) {
-                                          if (kDebugMode)
+                                          if (kDebugMode) {
                                             debugPrint(
                                               '❌ Upload retornou URL nula',
                                             );
+                                          }
                                           showUploadError(loc.somethingWrong);
                                           return;
                                         }
 
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint(
                                             '✅ Upload concluído: $url',
                                           );
+                                        }
                                         attachmentUrl = url;
                                         attachmentName =
                                             pickedName ??
                                             loc.roomsAttachmentDefaultName;
                                       }
 
-                                      if (kDebugMode)
+                                      if (kDebugMode) {
                                         debugPrint(
                                           '💾 Salvando post no banco de dados...',
                                         );
+                                      }
 
                                       final post = {
                                         'title': title,
@@ -582,14 +593,16 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                             post: post,
                                           );
                                       if (!saved) {
-                                        if (kDebugMode)
+                                        if (kDebugMode) {
                                           debugPrint('❌ Falha ao salvar post');
+                                        }
                                         showUploadError(loc.somethingWrong);
                                         return;
                                       }
 
-                                      if (kDebugMode)
+                                      if (kDebugMode) {
                                         debugPrint('✅ Post salvo com sucesso!');
+                                      }
                                       success = true;
 
                                       if (ctx2.mounted) {
@@ -604,10 +617,11 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                       }
                                       showUploadError(loc.somethingWrong);
                                     } finally {
-                                      if (kDebugMode)
+                                      if (kDebugMode) {
                                         debugPrint(
                                           '🏁 Finalizando (success=$success)...',
                                         );
+                                      }
                                       if (ctx2.mounted && !success) {
                                         setState2(() {
                                           uploading = false;
@@ -689,7 +703,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
           ),
           content: Text(
             loc.roomsDeletePostMessage,
-            style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
+            style: TextStyle(color: cs.onSurface.withValues(alpha: 0.9)),
           ),
           actions: [
             TextButton(
@@ -895,7 +909,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                   return Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: cs.surface,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1F24)
+                          : cs.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -917,8 +933,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                             if (isAuthor)
                               PopupMenuButton<int>(
                                 onSelected: (v) {
-                                  if (v == 1)
+                                  if (v == 1) {
                                     _deletePost(p['id']?.toString() ?? '');
+                                  }
                                 },
                                 itemBuilder: (_) => [
                                   PopupMenuItem(
@@ -934,7 +951,7 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                           Text(
                             p['body'] ?? '',
                             style: GoogleFonts.poppins(
-                              color: cs.onSurface.withOpacity(0.9),
+                              color: cs.onSurface.withValues(alpha: 0.9),
                             ),
                           ),
                         const SizedBox(height: 12),
@@ -1005,12 +1022,14 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                           : 'arquivo',
                                       mimeType: mimeType,
                                     );
+                                    // ignore: deprecated_member_use
                                     await Share.shareXFiles([xf]);
                                   } catch (e) {
-                                    if (kDebugMode)
+                                    if (kDebugMode) {
                                       debugPrint(
                                         'Erro ao compartilhar arquivo na web: $e',
                                       );
+                                    }
                                     if (!mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -1044,10 +1063,11 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                       );
                                     }
                                   } catch (e) {
-                                    if (kDebugMode)
+                                    if (kDebugMode) {
                                       debugPrint(
                                         'Erro ao salvar/abrir arquivo: $e',
                                       );
+                                    }
                                     if (!mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -1057,8 +1077,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                   }
                                 }
                               } catch (e) {
-                                if (kDebugMode)
+                                if (kDebugMode) {
                                   debugPrint('Erro ao abrir PDF: $e');
+                                }
                                 if (!mounted) return;
                                 Navigator.of(context).pop(); // Fechar loading
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1182,7 +1203,9 @@ class _RoomDetailPageState extends ConsumerState<RoomDetailPage> {
                                     Text(
                                       r['body'] ?? '',
                                       style: GoogleFonts.poppins(
-                                        color: cs.onSurface.withOpacity(0.9),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.9,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 8),

@@ -4,8 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-/// Service to interact with UFSCar SIGA API
-/// Handles login and fetching user subjects (matérias)
 class UFSCarAPIService {
   static const String _baseUrl = 'https://sistemas.ufscar.br/sagui-api/siga';
 
@@ -15,7 +13,6 @@ class UFSCarAPIService {
     required String email,
     required String password,
   }) async {
-    // Mock mode
     if (_useMockData) {
       if (kDebugMode) print('🧪 [UFSCar API] Usando dados mock');
       await Future.delayed(const Duration(seconds: 1));
@@ -25,7 +22,6 @@ class UFSCarAPIService {
     try {
       final url = Uri.parse('$_baseUrl/deferimento');
 
-      // BASIC AUTH (igual ao Next.js)
       final String basicAuth =
           'Basic ${base64Encode(utf8.encode('$email:$password'))}';
 
@@ -51,7 +47,6 @@ class UFSCarAPIService {
             },
           );
 
-      // Debug
       if (kDebugMode) {
         print('📡 [UFSCar API] Status: ${response.statusCode}');
         print(
@@ -59,18 +54,15 @@ class UFSCarAPIService {
         );
       }
 
-      // Sucesso
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
 
-      // Unauthorized
       if (response.statusCode == 401 || response.statusCode == 403) {
         if (kDebugMode) print('❌ Credenciais inválidas');
         return null;
       }
 
-      // Outros erros
       throw Exception(
         'Erro HTTP ${response.statusCode}: '
         '${response.body.substring(0, math.min(200, response.body.length))}',
@@ -81,7 +73,6 @@ class UFSCarAPIService {
     }
   }
 
-  /// Mock data
   static Map<String, dynamic> _getMockData() {
     return {
       'success': true,
@@ -112,7 +103,6 @@ class UFSCarAPIService {
     };
   }
 
-  /// Parse subjects from API response
   static List<Map<String, String>> parseSubjects(
     Map<String, dynamic> apiResponse,
   ) {

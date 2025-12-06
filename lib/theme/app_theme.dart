@@ -41,9 +41,7 @@ final ThemeData lightTheme = ThemeData(
     onPrimary: Colors.white,
     secondary: Color(0xFF33B0A8),
     onSecondary: Colors.white,
-    // Background (app canvas) and surface (cards) for light mode
-    background: Color(0xFFF5FBFF), // primaryBackground in light
-    surface: Color(0xFFFFFFFF), // secondaryBackground (cards) in light
+    surface: Color(0xFFF5FBFF),
     onSurface: Colors.black,
     error: Color(0xFFD32F2F),
     onError: Colors.white,
@@ -66,9 +64,7 @@ final ThemeData darkTheme = ThemeData(
     onPrimary: Colors.white,
     secondary: Color(0xFF33B0A8),
     onSecondary: Colors.white,
-    // Background (app canvas) and surface (cards) for dark mode
-    background: Color(0xFF1D2428), // primaryBackground in dark
-    surface: Color(0xFF14181B), // secondaryBackground (cards) in dark
+    surface: Color(0xFF1D2428),
     onSurface: Colors.white,
     error: Color(0xFFD32F2F),
     onError: Colors.white,

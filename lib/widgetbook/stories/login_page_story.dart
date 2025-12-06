@@ -49,7 +49,7 @@ class LoginPreview extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       blurRadius: 5,
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       offset: const Offset(0, 2),
                     ),
                   ],
@@ -87,7 +87,7 @@ class LoginPreview extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       blurRadius: 5,
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       offset: const Offset(0, 2),
                     ),
                   ],

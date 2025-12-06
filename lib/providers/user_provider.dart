@@ -32,7 +32,6 @@ class UserNotifier extends StateNotifier<User?> {
     }
   }
 
-  // Set user and persist in SharedPreferences
   void setUser(User? user) {
     state = user;
     if (user != null) {
@@ -54,7 +53,6 @@ class UserNotifier extends StateNotifier<User?> {
     _clearUserPrefs();
   }
 
-  // Persist user info locally
   Future<void> _saveUserPrefs(User user) async {
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -9,7 +9,7 @@ import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/notifications_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 
-import 'activity_page.dart'; // importa sua ActivityPage
+import 'activity_page.dart';
 import 'notifications_page.dart';
 import 'rooms_page.dart';
 import 'settings_page.dart';
@@ -30,7 +30,6 @@ class _MainPageState extends ConsumerState<MainPage> {
   void initState() {
     super.initState();
     _loadSubjects();
-    // initialize notifications service
     NotificationsService.init();
   }
 
@@ -51,7 +50,6 @@ class _MainPageState extends ConsumerState<MainPage> {
     }
   }
 
-  // Páginas correspondentes às abas
   List<Widget> get _pages => [
     AgendaPage(
       subjects: _subjects,
@@ -65,7 +63,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       isLoading: _isLoading,
     ),
     NotificationsPage(subjects: _subjects),
-    const SettingsPage(), // Configurações
+    const SettingsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -124,7 +122,6 @@ class _MainPageState extends ConsumerState<MainPage> {
         centerTitle: true,
       ),
 
-      // barra inferior
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -145,13 +142,11 @@ class _MainPageState extends ConsumerState<MainPage> {
         items: navItems,
       ),
 
-      // corpo alternável
       body: _pages[_selectedIndex],
     );
   }
 }
 
-// Agenda original virou uma subpágina separada
 class AgendaPage extends StatefulWidget {
   final List<Map<String, dynamic>> subjects;
   final VoidCallback onRefresh;
@@ -169,14 +164,13 @@ class AgendaPage extends StatefulWidget {
 }
 
 class _AgendaPageState extends State<AgendaPage> {
-  String? _selectedDay; // null = mostrar todos os dias
+  String? _selectedDay;
   late DateTime _currentMonth;
   late DateTime _selectedWeekStart;
 
   @override
   void initState() {
     super.initState();
-    // Inicializa com a segunda-feira da semana atual
     final now = DateTime.now();
     _currentMonth = DateTime(now.year, now.month, 1);
     final weekDay = now.weekday;
@@ -186,7 +180,6 @@ class _AgendaPageState extends State<AgendaPage> {
   void _previousMonth() {
     setState(() {
       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
-      // Atualiza a semana para a primeira segunda-feira do mês anterior
       final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
       final weekDay = firstDay.weekday;
       _selectedWeekStart = weekDay == 1
@@ -198,7 +191,6 @@ class _AgendaPageState extends State<AgendaPage> {
   void _nextMonth() {
     setState(() {
       _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
-      // Atualiza a semana para a primeira segunda-feira do mês seguinte
       final firstDay = DateTime(_currentMonth.year, _currentMonth.month, 1);
       final weekDay = firstDay.weekday;
       _selectedWeekStart = weekDay == 1
@@ -221,7 +213,6 @@ class _AgendaPageState extends State<AgendaPage> {
     final weekDay = now.weekday;
     final currentMonday = now.subtract(Duration(days: weekDay - 1));
 
-    // Compara apenas ano, mês e dia (ignora hora/minuto/segundo)
     return _selectedWeekStart.year == currentMonday.year &&
         _selectedWeekStart.month == currentMonday.month &&
         _selectedWeekStart.day == currentMonday.day;
@@ -266,7 +257,6 @@ class _AgendaPageState extends State<AgendaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Navegação do mês
           Row(
             children: [
               IconButton(
@@ -316,7 +306,6 @@ class _AgendaPageState extends State<AgendaPage> {
           ),
           const SizedBox(height: 12),
 
-          // Dias da semana com navegação
           Row(
             children: [
               IconButton(
@@ -326,7 +315,6 @@ class _AgendaPageState extends State<AgendaPage> {
                     _selectedWeekStart = _selectedWeekStart.subtract(
                       const Duration(days: 7),
                     );
-                    // Atualiza o mês exibido se necessário
                     _currentMonth = DateTime(
                       _selectedWeekStart.year,
                       _selectedWeekStart.month,
@@ -366,7 +354,6 @@ class _AgendaPageState extends State<AgendaPage> {
                     _selectedWeekStart = _selectedWeekStart.add(
                       const Duration(days: 7),
                     );
-                    // Atualiza o mês exibido se necessário
                     _currentMonth = DateTime(
                       _selectedWeekStart.year,
                       _selectedWeekStart.month,
@@ -465,7 +452,6 @@ class _AgendaPageState extends State<AgendaPage> {
   }
 
   Widget _buildGroupedSubjectsList(ColorScheme theme, AppLocalizations loc) {
-    // Agrupa matérias por dia da semana
     final Map<String, List<Map<String, dynamic>>> groupedByDay = {};
 
     for (var subject in widget.subjects) {
@@ -479,7 +465,6 @@ class _AgendaPageState extends State<AgendaPage> {
       }
     }
 
-    // Filtra por dia selecionado (se houver)
     Map<String, List<Map<String, dynamic>>> filteredByDay = groupedByDay;
     if (_selectedDay != null) {
       filteredByDay = {
@@ -489,11 +474,9 @@ class _AgendaPageState extends State<AgendaPage> {
       };
     }
 
-    // Ordena as chaves (dias) na ordem correta
     final sortedDays = filteredByDay.keys.toList()
       ..sort((a, b) => _getDayOrder(a).compareTo(_getDayOrder(b)));
 
-    // Se não há matérias no dia selecionado
     if (sortedDays.isEmpty && _selectedDay != null) {
       return Center(
         child: Column(
@@ -532,7 +515,6 @@ class _AgendaPageState extends State<AgendaPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header do dia
             Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 8),
               child: Row(
@@ -566,7 +548,6 @@ class _AgendaPageState extends State<AgendaPage> {
               ),
             ),
 
-            // Lista de matérias do dia
             ...materiasNoDia.asMap().entries.map((entry) {
               final index = entry.key;
               final subject = entry.value;
@@ -694,12 +675,12 @@ class _AgendaPageState extends State<AgendaPage> {
 
   Color _getColorForIndex(int index) {
     final colors = [
-      const Color(0xFFFFB84D), // Orange
-      const Color(0xFF4CD7A5), // Green
-      const Color(0xFFB894F6), // Purple
-      const Color(0xFF5DADE2), // Blue
-      const Color(0xFFFF6B6B), // Red
-      const Color(0xFFFECA57), // Yellow
+      const Color(0xFFFFB84D),
+      const Color(0xFF4CD7A5),
+      const Color(0xFFB894F6),
+      const Color(0xFF5DADE2),
+      const Color(0xFFFF6B6B),
+      const Color(0xFFFECA57),
     ];
     return colors[index % colors.length];
   }
@@ -752,7 +733,9 @@ class _AgendaPageState extends State<AgendaPage> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: selected
-                      ? Theme.of(context).colorScheme.onPrimary.withOpacity(0.9)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.onPrimary.withValues(alpha: 0.9)
                       : Theme.of(context).colorScheme.secondary,
                 ),
               ),
@@ -764,7 +747,6 @@ class _AgendaPageState extends State<AgendaPage> {
   }
 }
 
-// TaskCard permanece igual
 class TaskCard extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -815,7 +797,6 @@ class _TaskCardState extends State<TaskCard>
     if (data == null) {
       final auto = await FirebaseDataService.getUserAutoPresenceSetting(email);
       if (auto) {
-        // create default attendance starting from zero (user preference)
         _attended = 0;
         _missed = 0;
         await FirebaseDataService.saveAttendance(
@@ -840,8 +821,6 @@ class _TaskCardState extends State<TaskCard>
   }
 
   double get _percentage {
-    // _attended represents total classes held so far; _missed is absences.
-    // Presence percentage = (held - missed) / held
     final held = _attended;
     final missed = _missed;
     if (held <= 0) return 0.0;
@@ -939,9 +918,7 @@ class _TaskCardState extends State<TaskCard>
     final presenceLabel = loc.attendancePresence(pctValue);
     final attendedLabel = loc.attendanceAttendedLabel(_attended);
     final missedLabel = loc.attendanceMissedLabel(_missed);
-    // number of additional classes needed to reach 75% is computed where needed
     final cs = Theme.of(context).colorScheme;
-    // Force white titles on subject cards for consistent contrast
     final titleColor = Colors.white;
 
     return Container(
@@ -954,7 +931,6 @@ class _TaskCardState extends State<TaskCard>
         borderRadius: BorderRadius.circular(20),
         child: Column(
           children: [
-            // Header (always visible)
             Material(
               color: widget.color,
               child: InkWell(
@@ -972,7 +948,6 @@ class _TaskCardState extends State<TaskCard>
                           children: [
                             Text(
                               widget.title,
-                              // show the full discipline title (allow wrapping)
                               style: GoogleFonts.poppins(
                                 color: titleColor,
                                 fontSize: 18,
@@ -985,7 +960,7 @@ class _TaskCardState extends State<TaskCard>
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                color: titleColor.withOpacity(0.95),
+                                color: titleColor.withValues(alpha: 0.95),
                                 fontSize: 13,
                               ),
                             ),
@@ -995,7 +970,6 @@ class _TaskCardState extends State<TaskCard>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          // Force time on the first line and location (sala) on a second line
                           Builder(
                             builder: (ctx) {
                               final parts = widget.time.split('•');
@@ -1026,7 +1000,9 @@ class _TaskCardState extends State<TaskCard>
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.right,
                                       style: GoogleFonts.poppins(
-                                        color: titleColor.withOpacity(0.9),
+                                        color: titleColor.withValues(
+                                          alpha: 0.9,
+                                        ),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -1054,7 +1030,6 @@ class _TaskCardState extends State<TaskCard>
               ),
             ),
 
-            // Expandable content
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
@@ -1095,16 +1070,16 @@ class _TaskCardState extends State<TaskCard>
                                             Text(
                                               attendedLabel,
                                               style: GoogleFonts.poppins(
-                                                color: cs.onSurface.withOpacity(
-                                                  0.9,
+                                                color: cs.onSurface.withValues(
+                                                  alpha: 0.9,
                                                 ),
                                               ),
                                             ),
                                             Text(
                                               missedLabel,
                                               style: GoogleFonts.poppins(
-                                                color: cs.onSurface.withOpacity(
-                                                  0.9,
+                                                color: cs.onSurface.withValues(
+                                                  alpha: 0.9,
                                                 ),
                                               ),
                                             ),
@@ -1172,7 +1147,6 @@ class _TaskCardState extends State<TaskCard>
                                   );
                                 }
 
-                                // stacked layout for narrow/mobile screens
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1187,13 +1161,17 @@ class _TaskCardState extends State<TaskCard>
                                     Text(
                                       attendedLabel,
                                       style: GoogleFonts.poppins(
-                                        color: cs.onSurface.withOpacity(0.9),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.9,
+                                        ),
                                       ),
                                     ),
                                     Text(
                                       missedLabel,
                                       style: GoogleFonts.poppins(
-                                        color: cs.onSurface.withOpacity(0.9),
+                                        color: cs.onSurface.withValues(
+                                          alpha: 0.9,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(height: 12),

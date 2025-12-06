@@ -9,9 +9,6 @@ import 'package:study_planner/services/firebase_data_service.dart';
 import 'package:study_planner/services/notifications_service.dart';
 import 'package:study_planner/theme/app_theme.dart';
 
-/// ActivityPage + NewActivityPage
-/// UI updated to follow the provided mock; logic preserved.
-
 class ActivityPage extends ConsumerStatefulWidget {
   const ActivityPage({super.key});
 
@@ -29,18 +26,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     super.initState();
     _loadActivities();
   }
-
-  // Palette used for migration (distinct from UI palettes in NewActivity)
-  final List<int> _migrationPalette = [
-    0xFFD32F2F,
-    0xFFF4511E,
-    0xFFFF7043,
-    0xFFFFC107,
-    0xFFFFD600,
-    0xFF1976D2,
-    0xFF3949AB,
-    0xFFE91E63,
-  ];
 
   Future<void> _loadActivities() async {
     setState(() => _loading = true);
@@ -84,46 +69,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       MaterialPageRoute(builder: (_) => NewActivityPage(email: email)),
     );
     if (created == true) await _loadActivities();
-  }
-
-  // ignore: unused_element
-  Future<void> _migrateColors() async {
-    final loc = AppLocalizations.of(context)!;
-    final user = ref.read(userProvider);
-    final email = user?.email;
-    if (email == null) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(loc.activityMigrationStart)));
-
-    int updated = 0;
-    // Use a stable ordering: current _activities list sorted by end date
-    for (var i = 0; i < _activities.length; i++) {
-      final item = _activities[i];
-      final id = item['id']?.toString();
-      if (id == null) continue;
-
-      final backupColor = item['color'];
-      final newColor = _migrationPalette[i % _migrationPalette.length];
-
-      final updatedItem = Map<String, dynamic>.from(item);
-      // store previous color for rollback if needed
-      updatedItem['color_old'] = backupColor;
-      updatedItem['color'] = newColor;
-
-      final ok = await FirebaseDataService.updateUserActivity(
-        email: email,
-        id: id,
-        activity: updatedItem,
-      );
-      if (ok) updated++;
-    }
-
-    await _loadActivities();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(loc.activityMigrationDone(updated))));
   }
 
   bool _isDone(Map<String, dynamic> item) {
@@ -216,7 +161,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         ),
         content: Text(
           loc.activityDeleteMessage,
-          style: TextStyle(color: cs.onSurface.withOpacity(0.9)),
+          style: TextStyle(color: cs.onSurface.withValues(alpha: 0.9)),
         ),
         actions: [
           TextButton(
@@ -235,7 +180,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
     );
     if (confirmed != true) return;
 
-    // keep a copy in case user wants to undo
     final backup = Map<String, dynamic>.from(activity);
 
     final ok = await FirebaseDataService.deleteUserActivity(
@@ -250,7 +194,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
           action: SnackBarAction(
             label: loc.commonUndo,
             onPressed: () async {
-              // recreate the activity if user undoes
               final recreated = await FirebaseDataService.saveUserActivity(
                 email: email,
                 activity: backup,
@@ -290,7 +233,6 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
         ? theme.cardColor
         : cs.surface;
 
-    // prepare grouping by day (based on end date) and apply completed filter
     final grouped = <String, List<Map<String, dynamic>>>{};
     for (final item in _activities) {
       final done = _isDone(item);
@@ -309,20 +251,21 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
       ..sort((a, b) => DateTime.parse(a).compareTo(DateTime.parse(b)));
 
     return Scaffold(
-      backgroundColor: cs.background,
+      backgroundColor: cs.surface,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  // filter segmented control
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cs.primary.withOpacity(0.12)),
+                      border: Border.all(
+                        color: cs.primary.withValues(alpha: 0.12),
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -398,7 +341,7 @@ class _ActivityPageState extends ConsumerState<ActivityPage> {
                                   loc.activityEmptyTitle,
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
-                                    color: cs.onSurface.withOpacity(0.7),
+                                    color: cs.onSurface.withValues(alpha: 0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -507,8 +450,6 @@ class ActivityCardStyled extends StatelessWidget {
     this.onToggleComplete,
   });
 
-  // time formatting handled inline in the card to allow separate lines for start/end
-
   IconData _iconFor(Map<String, dynamic> activity) {
     final category = (activity['category'] ?? 'atividade').toString();
     if (category == 'prova') return Icons.history_edu;
@@ -551,12 +492,12 @@ class ActivityCardStyled extends StatelessWidget {
         color: cs.primaryBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: done ? theme.disabledColor.withOpacity(0.4) : accent,
+          color: done ? theme.disabledColor.withValues(alpha: 0.4) : accent,
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.03),
+            color: theme.shadowColor.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -594,7 +535,7 @@ class ActivityCardStyled extends StatelessWidget {
                       }
 
                       final TextStyle tss = GoogleFonts.poppins(
-                        color: cs.onSurface.withOpacity(0.72),
+                        color: cs.onSurface.withValues(alpha: 0.72),
                         fontSize: 12,
                       );
 
@@ -629,7 +570,7 @@ class ActivityCardStyled extends StatelessWidget {
                       fontSize: 13,
                       color: done
                           ? theme.disabledColor
-                          : cs.onSurface.withOpacity(0.85),
+                          : cs.onSurface.withValues(alpha: 0.85),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -652,7 +593,10 @@ class ActivityCardStyled extends StatelessWidget {
 
             PopupMenuButton<int>(
               color: surface,
-              icon: Icon(Icons.more_vert, color: cs.onSurface.withOpacity(0.7)),
+              icon: Icon(
+                Icons.more_vert,
+                color: cs.onSurface.withValues(alpha: 0.7),
+              ),
               onSelected: (v) {
                 if (v == 1) {
                   if (onEdit != null) onEdit!(activity);
@@ -705,14 +649,14 @@ class _NewActivityPageState extends State<NewActivityPage> {
   String _category = 'atividade';
 
   final List<int> _colors = [
-    0xFFE53935, // Red
-    0xFFF57C00, // Orange
-    0xFFFFB300, // Amber
-    0xFF43A047, // Green
-    0xFF00897B, // Teal
-    0xFF1976D2, // Blue
-    0xFF3949AB, // Indigo
-    0xFF8E24AA, // Purple
+    0xFFE53935,
+    0xFFF57C00,
+    0xFFFFB300,
+    0xFF43A047,
+    0xFF00897B,
+    0xFF1976D2,
+    0xFF3949AB,
+    0xFF8E24AA,
   ];
   int _selectedColor = 0xFFE53935;
 
@@ -721,11 +665,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
   bool get _canSave {
     final title = _titleController.text.trim();
     if (title.isEmpty) return false;
-    // For exams (prova) require start < end
     if (_category == 'prova') {
       return _start.isBefore(_end);
     }
-    // For normal activity, just require a title (end is always set)
     return true;
   }
 
@@ -753,7 +695,6 @@ class _NewActivityPageState extends State<NewActivityPage> {
             int.tryParse(existing['color']?.toString() ?? '') ?? _selectedColor;
       } catch (_) {}
     }
-    // update UI when title changes to enable/disable the Create button
     _titleController.addListener(() => setState(() {}));
   }
 
@@ -795,7 +736,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
-          color: Theme.of(context).shadowColor.withOpacity(0.03),
+          color: Theme.of(context).shadowColor.withValues(alpha: 0.03),
           blurRadius: 10,
           offset: const Offset(0, 4),
         ),
@@ -821,7 +762,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).shadowColor.withOpacity(0.02),
+              color: Theme.of(context).shadowColor.withValues(alpha: 0.02),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -838,7 +779,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                   fontSize: 13,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurface.withOpacity(0.9),
+                  ).colorScheme.onSurface.withValues(alpha: 0.9),
                 ),
               ),
             ),
@@ -847,7 +788,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
               value,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.9),
               ),
             ),
           ],
@@ -896,12 +839,9 @@ class _NewActivityPageState extends State<NewActivityPage> {
       ).showSnackBar(SnackBar(content: Text(loc.activityCreateError)));
     }
 
-    // Schedule a notification for the activity deadline (or start if exam)
     try {
       final deadlineOrStart = _category == 'prova' ? _start : _end;
-      // Use a stable id derived from time
       final id = deadlineOrStart.millisecondsSinceEpoch.remainder(1000000);
-      // 1) Alerta 10 minutos antes
       final preAlert = deadlineOrStart.subtract(const Duration(minutes: 10));
       if (kDebugMode) {
         print(
@@ -913,26 +853,21 @@ class _NewActivityPageState extends State<NewActivityPage> {
       }
       if (!preAlert.isBefore(DateTime.now())) {
         await NotificationsService.scheduleNotification(
-          id: id, // same seed ok
+          id: id,
           title: 'Faltam 10 minutos',
           body: '${_titleController.text.trim()} em 10 minutos',
           scheduledDate: preAlert,
         );
       }
-      // 2) No prazo
       await NotificationsService.scheduleNotification(
         id: id + 1,
         title: 'Atividade chegando no prazo',
         body: '${_titleController.text.trim()} - prazo atingido',
-        scheduledDate: deadlineOrStart.add(
-          const Duration(minutes: 1),
-        ), // avoid immediate firing
+        scheduledDate: deadlineOrStart.add(const Duration(minutes: 1)),
       );
-      // Debug: list pending scheduled notifications
       await NotificationsService.debugPrintPendingSchedules();
-      // Show a quick confirmation notification now so the user sees something immediately
       await NotificationsService.showImmediateNotification(
-        id: id + 100, // separate id to avoid collision
+        id: id + 100,
         title: 'Notificação agendada',
         body:
             'Vamos te lembrar no horário definido: ${_format(deadlineOrStart)}',
@@ -972,7 +907,6 @@ class _NewActivityPageState extends State<NewActivityPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Make content scrollable to avoid overflow in landscape
               Expanded(
                 child: SingleChildScrollView(
                   keyboardDismissBehavior:
@@ -987,14 +921,13 @@ class _NewActivityPageState extends State<NewActivityPage> {
                           decoration: InputDecoration.collapsed(
                             hintText: loc.activityNameHint,
                             hintStyle: TextStyle(
-                              color: cs.onSurface.withOpacity(0.6),
+                              color: cs.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 14),
 
-                      // Date controls: if 'prova' show start + end; otherwise only end (prazo)
                       if (_category == 'prova')
                         Row(
                           children: [
@@ -1035,28 +968,32 @@ class _NewActivityPageState extends State<NewActivityPage> {
                         ),
                       const SizedBox(height: 14),
 
-                      // Category
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: cs.surface,
+                          color: theme.brightness == Brightness.dark
+                              ? theme.cardColor
+                              : cs.surface,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: theme.shadowColor.withOpacity(0.03),
+                              color: theme.shadowColor.withValues(alpha: 0.03),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: _category,
+                          initialValue: _category,
+                          dropdownColor: theme.brightness == Brightness.dark
+                              ? theme.cardColor
+                              : cs.surface,
                           items: [
                             DropdownMenuItem(
                               value: 'atividade',
                               child: Text(
                                 loc.activityCategoryAssignment,
-                                style: TextStyle(color: cs.primaryText),
+                                style: TextStyle(color: cs.onSurface),
                               ),
                             ),
                             DropdownMenuItem(
@@ -1073,6 +1010,7 @@ class _NewActivityPageState extends State<NewActivityPage> {
                             border: InputBorder.none,
                             hintText: loc.activityCategoryLabel,
                           ),
+                          style: TextStyle(color: cs.onSurface),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1085,14 +1023,13 @@ class _NewActivityPageState extends State<NewActivityPage> {
                           decoration: InputDecoration.collapsed(
                             hintText: loc.activityDetailsHint,
                             hintStyle: TextStyle(
-                              color: cs.onSurface.withOpacity(0.6),
+                              color: cs.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Palette
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -1109,8 +1046,8 @@ class _NewActivityPageState extends State<NewActivityPage> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: theme.shadowColor.withOpacity(
-                                        0.06,
+                                      color: theme.shadowColor.withValues(
+                                        alpha: 0.06,
                                       ),
                                       blurRadius: 6,
                                       offset: const Offset(0, 4),

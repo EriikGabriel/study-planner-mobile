@@ -139,7 +139,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 }
                 if (context.mounted) (context as Element).markNeedsBuild();
               },
-              activeColor: colors.primary,
+              activeThumbColor: colors.primary,
             ),
           ),
         );
@@ -285,9 +285,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colors.primary.withOpacity(0.08),
+        color: colors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.primary.withOpacity(0.18)),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -379,7 +379,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         trailing: Switch(
           value: isDarkMode,
           onChanged: (_) => ref.read(themeProvider.notifier).toggleTheme(),
-          activeColor: colors.primary,
+          activeThumbColor: colors.primary,
         ),
       ),
     );
@@ -396,7 +396,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           icon: Icons.info_outline,
           title: loc.settingsAboutApp,
           onTap: () async {
-            // Placeholder version; not fetching real version
             const version = '1.0.0';
             if (!context.mounted) return;
             showDialog(
@@ -494,7 +493,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
           if (confirm == true && context.mounted) {
             await FirebaseAuth.instance.signOut();
-            // ref is not available here, so userProvider signOut must be handled elsewhere if needed
             if (context.mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const LoginPage()),
